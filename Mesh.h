@@ -1,4 +1,5 @@
 #include <Eigen/Dense>
+#include "HandlePoint.h"
 
 struct Mesh
 {
