@@ -3,6 +3,16 @@
 using namespace Eigen;
 
 
+std::pair<bool, Vector3d> isConstrained(const std::vector<HandlePoint>& C, int index) {
+
+    for (const HandlePoint& c : C) {
+        if (index == c.vertexIndexInMesh) {
+            return std::pair<bool, Vector3d>(true, c.wantedVertexPosition);
+        }
+    }
+    return std::pair<bool, Vector3d>(false, Vector3d(0,0,0));
+}
+
 /* Compute local rigidity energy
  * N : Neighbors of all vertices
  * Vi : Mesh before rotation
@@ -12,7 +22,10 @@ using namespace Eigen;
  * Out : Local rigidity energy
 */
 
-double compute_reg_energy(const Eigen::MatrixXd& Vi, const MatrixXd Vi_p, const std::vector<MatrixXd>& R, const std::vector<std::list<int>>& N)
+double compute_reg_energy(const Eigen::MatrixXd& Vi, 
+                          const MatrixXd Vi_p, 
+                          const std::vector<MatrixXd>& R, 
+                          const std::vector<std::list<int>>& N)
 {
     double energy = 0;
     for (int i = 0; i < Vi.rows(); i++)
@@ -31,13 +44,40 @@ double compute_reg_energy(const Eigen::MatrixXd& Vi, const MatrixXd Vi_p, const 
     return energy;
 }
 
-double compute_fit_energy()
+double compute_fit_energy(const Eigen::MatrixXd& Vi, const std::vector<HandlePoint>& C, const Eigen::MatrixXd& T)
 {
-
+    double energy = 0;
+    for (int i = 0; i <= Vi.rows(); i++)
+    {
+        std::pair<bool,Vector3d> constrained = isConstrained(C, i);
+        if (constrained.first)
+        {
+            VectorXd vi = Vi.row(i);
+            VectorXd ti = (VectorXd) constrained.second;
+            energy += pow((vi-ti).norm(), 2);
+        }
+    }
+    return energy;
 }
 
+double compute_total_energy(const Eigen::MatrixXd& Vi, 
+                            const MatrixXd Vi_p, 
+                            const std::vector<MatrixXd>& R, 
+                            const std::vector<std::list<int>>& N,
+                            const std::vector<HandlePoint>& C, 
+                            const Eigen::MatrixXd& T)
+{
+    double total_energy  = 0;
+    total_energy += compute_reg_energy(Vi, Vi_p, R, N);
+    total_energy += compute_fit_energy(Vi, C, T);
+    return total_energy;
+}
 
-MatrixXd compute_covariance_matrix(const Eigen::MatrixXd& W, const MatrixXd& Vi, const MatrixXd& Vi_p, const std::vector<std::list<int>>& N, int& index)
+MatrixXd compute_covariance_matrix(const Eigen::MatrixXd& W, 
+                                   const MatrixXd& Vi, 
+                                   const MatrixXd& Vi_p, 
+                                   const std::vector<std::list<int>>& N, 
+                                   int& index)
 {
     MatrixXd Si(Vi.cols(),Vi.cols());
     // Retrieve neighbors of v
@@ -65,17 +105,12 @@ MatrixXd compute_covariance_matrix(const Eigen::MatrixXd& W, const MatrixXd& Vi,
     return Si;
 }
 
-std::pair<bool, Vector3d> isConstrained(const std::vector<HandlePoint>& C, int index) {
 
-    for (const HandlePoint& c : C) {
-        if (index == c.vertexIndexInMesh) {
-            return std::pair<bool, Vector3d>(true, c.wantedVertexPosition);
-        }
-    }
-    return std::pair<bool, Vector3d>(false, Vector3d(0,0,0));
-}
-
-MatrixXd compute_b(const Eigen::MatrixXd& W, const std::vector<std::list<int>>& N, const MatrixXd& V, const std::vector<MatrixXd>& R, const std::vector<HandlePoint>& C)
+MatrixXd compute_b(const Eigen::MatrixXd& W, 
+                   const std::vector<std::list<int>>& N, 
+                   const MatrixXd& V, 
+                   const std::vector<MatrixXd>& R, 
+                   const std::vector<HandlePoint>& C)
 {
     MatrixXd b = MatrixXd::Zero(V.rows(),V.rows());
     for (int i = 0; i <= V.rows(); i++)
@@ -115,6 +150,21 @@ MatrixXd compute_b(const Eigen::MatrixXd& W, const std::vector<std::list<int>>& 
         }
 
     }
-    return b;
-    
+    return b; 
+}
+
+MatrixXd compute_Ri(const Eigen::MatrixXd& W, 
+                   const MatrixXd& Vi, 
+                   const MatrixXd& Vi_p, 
+                   const std::vector<std::list<int>>& N, 
+                   int& i)
+{
+    MatrixXd Si = compute_covariance_matrix(W, Vi, Vi_p, N, i);
+
+    JacobiSVD<MatrixXd> svd(Si, ComputeThinU | ComputeThinV);
+
+    // Compute rotation Ri
+    DiagonalMatrix<double, 3> D(1, 1, (svd.matrixV() * svd.matrixU().transpose()).determinant());
+    MatrixXd Ri = svd.matrixV() * D * svd.matrixU().transpose();
+    return Ri;
 }
