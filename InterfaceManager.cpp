@@ -1,5 +1,6 @@
 #include "InterfaceManager.h"
 #include <igl/unproject_onto_mesh.h>
+#include "ARAP.h"
 
 void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, bool isShiftPressed)
 {
@@ -53,6 +54,19 @@ void InterfaceManager::onMouseReleased()
 
 bool InterfaceManager::onMouseMoved(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, bool &needArap, const EInitialisationType &initialisationType)
 {
+    if (mouseIsPressed && needArap)
+    {
+        // Get the control points based on the current selection
+        std::vector<int> selectedControlPoints = getSelectedControlPointsIndex(mesh);
+
+        // Perform ARAP deformation only on the selected control points
+        int iterations = 10; // Set the number of iterations as needed
+        EInitialisationType initType = EInitialisationType::e_LastFrame; // Set the desired initialisation type
+        MatrixXd deformedVertices = arap(mesh, iterations, initType);
+
+        // Update the selected control points' positions in the deformed mesh
+        mesh.updateVertices(deformedVertices, selectedControlPoints);
+    }
     return false;
 }
 

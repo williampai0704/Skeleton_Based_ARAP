@@ -45,4 +45,6 @@ public:
 
 	void computeL_W_N();
 	Eigen::MatrixXd getL_withCP() const;
+
+	void updateVertices(const Eigen::MatrixXd& newVertices, const std::vector<int>& vertexIndices);
 };

@@ -8,7 +8,8 @@ int main(int argc, char *argv[])
     Mesh mesh = Mesh();
 
     mesh.InitMesh(Mesh::MeshType::SKELETON);
-    bool needToPerformArap = false;
+    // bool needToPerformArap = false;
+    bool needToPerformArap = true;
     EInitialisationType initialisationType = EInitialisationType::e_LastFrame;
 
     // Set up interface
