@@ -6,6 +6,7 @@ list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # Library
 set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Libs CACHE PATH "Path to lib folder")
 set(Eigen3_DIR ${LIBRARY_DIR}/Eigen/share/eigen3/cmake CACHE PATH "Path to installed Eigen")
+set(Pinocchio_DIR ${LIBRARY_DIR}/Pinocchio)
 find_package(Eigen3 REQUIRED)
 set(HEADER_FILES Eigen.h)
 
@@ -13,6 +14,8 @@ set(HEADER_FILES Eigen.h)
 option(LIBIGL_WITH_OPENGL            "Use OpenGL"         ON)
 option(LIBIGL_WITH_OPENGL_GLFW       "Use GLFW"           ON)
 include(libigl)
+
+include_directories(${Pinocchio_DIR})
 
 # Add your project files
 file(GLOB SRC_FILES *.cpp *.h)

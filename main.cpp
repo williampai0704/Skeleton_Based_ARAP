@@ -3,6 +3,9 @@
 #include "ARAP.h"
 #include <fstream>
 #include <string>
+#include "Libs/Pinocchio/Pinocchio.h"
+#include "AnimalUI/processor.h"
+
 using namespace std;
 
 
@@ -52,7 +55,7 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_off()
 }
 
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
     Mesh mesh = Mesh();
     std::tuple<Eigen::MatrixXd, Eigen::MatrixXi> offFile = read_off();
@@ -66,7 +69,7 @@ int main(int argc, char *argv[])
     cout << mesh.V.rows() << " vertices loaded." << endl;
     cout << mesh.F.rows() << " faces loaded" << endl;
 
-    // Check read file
+    // // Check read file
     // cout << "mesh.V" << endl;
     // for (int i = 0; i < mesh.V.rows(); i++)
     // {
@@ -85,31 +88,35 @@ int main(int argc, char *argv[])
     // Initialize neighbors, weights and Laplace-Beltrami matrix
     mesh.computeL_W_N();
 
-    // Check N metrix
-    cout << "N" << endl;
-    for (int i = 0; i < mesh.N.size(); i++)
-    {
-        cout << "face" << i << endl;
-        std::list<int> n = mesh.N[i];
-        for (std::list<int>::iterator it = n.begin(); it != n.end(); ++it)
-        {
-            cout << *it << " ";
-        }
-        cout << endl;
-    }
+    // // Check N metrix
+    // cout << "N" << endl;
+    // for (int i = 0; i < mesh.N.size(); i++)
+    // {
+    //     cout << "face" << i << endl;
+    //     std::list<int> n = mesh.N[i];
+    //     for (std::list<int>::iterator it = n.begin(); it != n.end(); ++it)
+    //     {
+    //         cout << *it << " ";
+    //     }
+    //     cout << endl;
+    // }
 
-    // Check W matrix
-    cout << "W" << endl;
-    for (int i = 0; i < mesh.W.rows(); i++)
-    {
-        for (int j = 0; j < mesh.W.cols(); j++)
-        {
-            cout << mesh.W(i,j) << " ";
-        }
-        cout << endl;
-    }
+    // // Check W matrix
+    // cout << "W" << endl;
+    // for (int i = 0; i < mesh.W.rows(); i++)
+    // {
+    //     for (int j = 0; j < mesh.W.cols(); j++)
+    //     {
+    //         cout << mesh.W(i,j) << " ";
+    //     }
+    //     cout << endl;
+    // }
 
     const Eigen::MatrixXd V_save = mesh.V;
 
-
+     vector<string> args;
+    for (int i = 0; i < argc; ++i)
+        args.push_back(argv[i]);
+    
+    Eigen::MatrixXd c = process(args);
 }
