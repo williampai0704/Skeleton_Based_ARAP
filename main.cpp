@@ -4,7 +4,6 @@
 #include <fstream>
 #include <string>
 #include "Libs/Pinocchio/Pinocchio.h"
-#include "AnimalUI/processor.h"
 
 using namespace std;
 
@@ -16,7 +15,7 @@ struct Face {
 // Read vertices and faces 
 tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_off()
 {
-    string filePath = "./../mesh/pseudo_mesh_1.off";
+    string filePath = "./../mesh/pseudo_mesh.off";
     ifstream file(filePath);
     if (!file) {
         cerr << "cannot open file" << endl;
@@ -54,6 +53,44 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_off()
     return std::tuple<Eigen::MatrixXd, Eigen::MatrixXi>{Vi,F};
 }
 
+Eigen::MatrixXd read_attachment()
+{
+    string filePath = "./../mesh/attachment.out";
+    ifstream file(filePath);
+    if (!file) {
+        cerr << "cannot open file" << endl;
+    }
+    // Read the data from the file and store it in a dynamic matrix
+    std::vector<std::vector<double>> data;
+    std::string line;
+    while (std::getline(file, line)) {
+        std::vector<double> row;
+        row.push_back(0.0);
+        std::istringstream iss(line);
+        double value;
+        while (iss >> value) {
+            row.push_back(value);
+        }
+        data.push_back(row);
+    }
+
+    // Close the file after reading
+    file.close();
+
+    // Determine the dimensions of the matrix
+    size_t rows = data.size();
+    size_t cols = (rows > 0) ? data[0].size() : 0;
+
+    // Create an Eigen matrix and populate it with data
+    Eigen::MatrixXd matrix(rows, cols);
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            matrix(i, j) = data[i][j];
+        }
+    }
+    return matrix;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -88,7 +125,7 @@ int main(int argc, char **argv)
     // Initialize neighbors, weights and Laplace-Beltrami matrix
     mesh.computeL_W_N();
 
-    // // Check N metrix
+    // // // Check N metrix
     // cout << "N" << endl;
     // for (int i = 0; i < mesh.N.size(); i++)
     // {
@@ -101,7 +138,7 @@ int main(int argc, char **argv)
     //     cout << endl;
     // }
 
-    // // Check W matrix
+    // //Check W matrix
     // cout << "W" << endl;
     // for (int i = 0; i < mesh.W.rows(); i++)
     // {
@@ -114,9 +151,15 @@ int main(int argc, char **argv)
 
     const Eigen::MatrixXd V_save = mesh.V;
 
-     vector<string> args;
-    for (int i = 0; i < argc; ++i)
-        args.push_back(argv[i]);
-    
-    Eigen::MatrixXd c = process(args);
+    // // Check M matrix
+    // Eigen::MatrixXd M = read_attachment();
+    // for (int i = 0; i < M.rows(); i++)
+    // {
+    //     for(int j = 0; j < M.cols(); j++)
+    //     {
+    //         cout << M(i,j) << " ";
+    //     }
+    //     cout << endl;
+    // } 
+
 }

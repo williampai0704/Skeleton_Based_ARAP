@@ -32,7 +32,7 @@ THE SOFTWARE.
 #include "defmesh.h"
 #include "motion.h"
 #include "animalSkeleton.h"
-#include "../Eigen.h"
+// #include "../Eigen.h"
 
 struct ArgData
 {
@@ -45,7 +45,7 @@ struct ArgData
     bool stopAfterCircles;
     string filename;
     string motionname;
-    Quaternion<> meshTransform;
+    // Quaternion<> meshTransform;
     double skelScale;
     bool noFit;
     Skeleton skeleton;
@@ -89,22 +89,22 @@ ArgData processArgs(const vector<string> &args)
             // out.skeleton = HorseSkeleton();
             continue;
         }
-        if (curStr == string("-rot"))
-        {
-            if (cur + 3 >= num)
-            {
-                cout << "Too few rotation arguments; exiting." << endl;
-                printUsageAndExit();
-            }
-            double x, y, z, deg;
-            sscanf(args[cur++].c_str(), "%lf", &x);
-            sscanf(args[cur++].c_str(), "%lf", &y);
-            sscanf(args[cur++].c_str(), "%lf", &z);
-            sscanf(args[cur++].c_str(), "%lf", &deg);
+        // if (curStr == string("-rot"))
+        // {
+        //     if (cur + 3 >= num)
+        //     {
+        //         cout << "Too few rotation arguments; exiting." << endl;
+        //         printUsageAndExit();
+        //     }
+        //     double x, y, z, deg;
+        //     sscanf(args[cur++].c_str(), "%lf", &x);
+        //     sscanf(args[cur++].c_str(), "%lf", &y);
+        //     sscanf(args[cur++].c_str(), "%lf", &z);
+        //     sscanf(args[cur++].c_str(), "%lf", &deg);
 
-            out.meshTransform = Quaternion<>(Vector3(x, y, z), deg * M_PI / 180.) * out.meshTransform;
-            continue;
-        }
+        //     out.meshTransform = Quaternion<>(Vector3(x, y, z), deg * M_PI / 180.) * out.meshTransform;
+        //     continue;
+        // }
         if (curStr == string("-motion"))
         {
             if (cur == num)
@@ -122,7 +122,7 @@ ArgData processArgs(const vector<string> &args)
     return out;
 }
 
-Eigen::MatrixXd process(const std::vector<std::string> &args)
+void process(const std::vector<std::string> &args)
 {
     int i;
     ArgData a = processArgs(args);
@@ -137,8 +137,8 @@ Eigen::MatrixXd process(const std::vector<std::string> &args)
         return;
     }
 
-    for (i = 0; i < (int)m.vertices.size(); ++i)
-        m.vertices[i].pos = a.meshTransform * m.vertices[i].pos;
+    // for (i = 0; i < (int)m.vertices.size(); ++i)
+    //     m.vertices[i].pos = a.meshTransform * m.vertices[i].pos;
     m.normalizeBoundingBox();
     m.computeVertexNormals();
 
@@ -200,20 +200,15 @@ Eigen::MatrixXd process(const std::vector<std::string> &args)
     // output attachment
     // std::ofstream astrm("./data/attachment.out");
 
-    std::Vector<double, -1> v = o.attachment->getWeights(0);
-    Eigen::MatrixXd c((int)m.vertices.size(),v.size());
-
     for (i = 0; i < (int)m.vertices.size(); ++i)
     {
-        std::Vector<double, -1> v = o.attachment->getWeights(i);
+        Vector<double, -1> v = o.attachment->getWeights(i);
         for (int j = 0; j < v.size(); ++j)
         {
             double d = floor(0.5 + v[j] * 10000.) / 10000.;
             // astrm << d << " ";
-            c(i,j) = d;
         }
         // astrm << endl;
     }
-    return c;
-    // delete o.attachment;
+    delete o.attachment;
 }
