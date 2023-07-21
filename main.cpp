@@ -35,8 +35,10 @@ int main(int argc, char *argv[])
     {
         if (needToPerformArap)
         {
+            std::cout << "Current mesh.V: " << mesh.V << std::endl;
             performARAP(mesh, initialisationType, viewer, interfaceManager);
             needToPerformArap = false;
+            std::cout << "mesh.V after ARAP: " << mesh.V << std::endl;
         }
 
         return false;
