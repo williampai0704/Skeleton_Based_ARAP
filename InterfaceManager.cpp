@@ -2,7 +2,7 @@
 #include <igl/unproject_onto_mesh.h>
 #include <igl/unproject_on_line.h>
 #include <igl/unproject_on_plane.h>
-#include "ARAP.h"
+// #include "ARAP.h"
 
 void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, bool isShiftPressed)
 {

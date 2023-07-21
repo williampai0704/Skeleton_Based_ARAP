@@ -1,4 +1,3 @@
-#include "Eigen.h"
 #include "Mesh.h"
 #include "ARAPInitEnum.h"
 using namespace Eigen;
@@ -25,8 +24,8 @@ std::pair<bool, Vector3d> isConstrained(const std::vector<ControlPoint>& C, int 
  * Out : Local rigidity energy
 */
 
-double compute_reg_energy(const Eigen::MatrixXd& W,
-                          const Eigen::MatrixXd& Vi, 
+double compute_reg_energy(const MatrixXd& W,
+                          const MatrixXd& Vi, 
                           const MatrixXd Vi_p, 
                           const std::vector<MatrixXd>& R, 
                           const std::vector<std::list<int>>& N)
@@ -50,10 +49,10 @@ double compute_reg_energy(const Eigen::MatrixXd& W,
     return energy;
 }
 
-double compute_fit_energy(const Eigen::MatrixXd& Vi, const std::vector<ControlPoint>& C)
+double compute_fit_energy(const MatrixXd& Vi, const std::vector<ControlPoint>& C)
 {
     double energy = 0;
-    for (int i = 0; i <= Vi.rows(); i++)
+    for (int i = 0; i < Vi.rows(); i++)
     {
         std::pair<bool,Vector3d> constrained = isConstrained(C, i);
         if (constrained.first)
@@ -66,8 +65,8 @@ double compute_fit_energy(const Eigen::MatrixXd& Vi, const std::vector<ControlPo
     return energy;
 }
 
-double compute_total_energy(const Eigen::MatrixXd& W,
-                            const Eigen::MatrixXd& Vi, 
+double compute_total_energy(const MatrixXd& W,
+                            const MatrixXd& Vi, 
                             const MatrixXd Vi_p, 
                             const std::vector<MatrixXd>& R, 
                             const std::vector<std::list<int>>& N,
@@ -79,7 +78,7 @@ double compute_total_energy(const Eigen::MatrixXd& W,
     return total_energy;
 }
 
-MatrixXd compute_covariance_matrix(const Eigen::MatrixXd& W,
+MatrixXd compute_covariance_matrix(const MatrixXd& W,
                                    const MatrixXd& Vi, 
                                    const MatrixXd& Vi_p, 
                                    const std::vector<std::list<int>>& N, 
@@ -89,8 +88,8 @@ MatrixXd compute_covariance_matrix(const Eigen::MatrixXd& W,
     // Retrieve neighbors of v
     std::list<int> n = N[index];
 
-    MatrixXd P = MatrixXd::Zero(Vi.rows(),n.size());
-    MatrixXd P_p = MatrixXd::Zero(Vi.rows(),n.size());
+    MatrixXd P = MatrixXd::Zero(Vi.cols(),n.size());
+    MatrixXd P_p = MatrixXd::Zero(Vi.cols(),n.size());
     DiagonalMatrix<double,Eigen::Dynamic> D(n.size());
 
     Vector3d vi = Vi.row(index);
@@ -112,14 +111,14 @@ MatrixXd compute_covariance_matrix(const Eigen::MatrixXd& W,
 }
 
 
-MatrixXd compute_b(const Eigen::MatrixXd& W, 
+MatrixXd compute_b(const MatrixXd& W, 
                    const std::vector<std::list<int>>& N, 
                    const MatrixXd& V, 
                    const std::vector<MatrixXd>& R, 
                    const std::vector<ControlPoint>& C)
 {
-    MatrixXd b = MatrixXd::Zero(V.rows(),V.rows());
-    for (int i = 0; i <= V.rows(); i++)
+    MatrixXd b = MatrixXd::Zero(V.rows(),V.cols());
+    for (int i = 0; i < V.rows(); i++)
     {
         VectorXd vi = V.row(i);
         std::list<int> n = N[i];
@@ -159,7 +158,7 @@ MatrixXd compute_b(const Eigen::MatrixXd& W,
     return b; 
 }
 
-MatrixXd compute_Ri(const Eigen::MatrixXd& W, 
+MatrixXd compute_Ri(const MatrixXd& W, 
                    const MatrixXd& Vi, 
                    const MatrixXd& Vi_p, 
                    const std::vector<std::list<int>>& N, 
@@ -310,6 +309,7 @@ MatrixXd arap(const Mesh& mesh, const int& kmax, const EInitialisationType& init
             *outInitialEnergy = new_energy;
 
         k++;
+
     } while (k < kmax && abs(old_energy - new_energy) > tol);
 
     if (outInterationNumber != nullptr)

@@ -328,14 +328,14 @@ Eigen::MatrixXd Mesh::getL_withCP() const
 	return _L;
 }
 
-void Mesh::updateVertices(const Eigen::MatrixXd &newVertices, const std::vector<int> &vertexIndices)
-{
-	for (std::vector<int>::const_iterator it = vertexIndices.begin(); it != vertexIndices.end(); ++it)
-	{
-		int i = *it;
-		if (i >= 0 && i < V.rows())
-		{
-			V.row(i) = newVertices.row(i);
-		}
-	}
-}
+// void Mesh::updateVertices(const Eigen::MatrixXd &newVertices, const std::vector<int> &vertexIndices)
+// {
+// 	for (std::vector<int>::const_iterator it = vertexIndices.begin(); it != vertexIndices.end(); ++it)
+// 	{
+// 		int i = *it;
+// 		if (i >= 0 && i < V.rows())
+// 		{
+// 			V.row(i) = newVertices.row(i);
+// 		}
+// 	}
+// }

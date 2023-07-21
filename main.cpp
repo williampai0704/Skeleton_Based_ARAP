@@ -16,10 +16,16 @@ int main(int argc, char *argv[])
     Mesh mesh = Mesh();
 
     mesh.InitMesh(Mesh::MeshType::SKELETON);
+
+    // Center mesh
     mesh.V = mesh.V.rowwise() - mesh.V.colwise().mean();
 
     bool needToPerformArap = false;
     EInitialisationType initialisationType = EInitialisationType::e_LastFrame;
+
+    // Compute neightbours and weights and matrix
+    mesh.computeL_W_N();
+    const Eigen::MatrixXd V_save = mesh.V;
 
     // Set up interface
     igl::opengl::glfw::Viewer viewer;
