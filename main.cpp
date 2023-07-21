@@ -67,7 +67,6 @@ Eigen::MatrixXd read_attachment()
     std::string line;
     while (std::getline(file, line)) {
         std::vector<double> row;
-        row.push_back(0.0);
         std::istringstream iss(line);
         double value;
         while (iss >> value) {
