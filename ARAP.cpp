@@ -52,7 +52,7 @@ double compute_reg_energy(const MatrixXd& W,
 double compute_fit_energy(const MatrixXd& Vi, const std::vector<ControlPoint>& C)
 {
     double energy = 0;
-    for (int i = 0; i <= Vi.rows(); i++)
+    for (int i = 0; i < Vi.rows(); i++)
     {
         std::pair<bool,Vector3d> constrained = isConstrained(C, i);
         if (constrained.first)
@@ -118,7 +118,7 @@ MatrixXd compute_b(const MatrixXd& W,
                    const std::vector<ControlPoint>& C)
 {
     MatrixXd b = MatrixXd::Zero(V.rows(),V.cols());
-    for (int i = 0; i <= V.rows(); i++)
+    for (int i = 0; i < V.rows(); i++)
     {
         VectorXd vi = V.row(i);
         std::list<int> n = N[i];
