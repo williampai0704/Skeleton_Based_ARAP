@@ -9,7 +9,10 @@ void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &m
     std::cout << "Mouse pressed" << std::endl;
     mouseIsPressed = true;
     if (moveSelectionMode)
+    {
+        projectOnMoveDirection(viewer, lastProjectedPoint);
         return;
+    }
 
     int fid;
     Eigen::Vector3d bc;
@@ -44,7 +47,7 @@ void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &m
             selection.push_back(mesh.F.row(fid)[closestVertex]);
         }
     }
-    else
+    else if (isShiftPressed)
         selection.clear();
 
     displaySelectedPoints(viewer, mesh);
@@ -58,45 +61,57 @@ void InterfaceManager::onMouseReleased()
 
 bool InterfaceManager::onMouseMoved(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, bool &needArap, const EInitialisationType &initialisationType)
 {
-    if (mouseIsPressed && needArap && moveSelectionMode)
-    {
-        // TODO: Daniel need to fix this!!!!
-        // // Get the control points based on the current selection
-        // std::vector<int> selectedControlPoints = getSelectedControlPointsIndex(mesh);
+    if (!mouseIsPressed)
+        return false;
 
-        // // Perform ARAP deformation only on the selected control points
-        // int iterations = 10;                                             // Set the number of iterations as needed
-        // EInitialisationType initType = EInitialisationType::e_LastFrame; // Set the desired initialisation type
-        // Eigen::MatrixXd deformedVertices = arap(mesh, iterations, initType);
+    // if (mouseIsPressed && needArap && moveSelectionMode)
+    // {
+    // TODO: Daniel need to fix this!!!!
+    // // Get the control points based on the current selection
+    // std::vector<int> selectedControlPoints = getSelectedControlPointsIndex(mesh);
 
-        // // Update the selected control points' positions in the deformed mesh
-        // mesh.updateVertices(deformedVertices, selectedControlPoints);
-        // return true;
-    }
-    else if (mouseIsPressed && !needArap && moveSelectionMode)
+    // // Perform ARAP deformation only on the selected control points
+    // int iterations = 10;                                             // Set the number of iterations as needed
+    // EInitialisationType initType = EInitialisationType::e_LastFrame; // Set the desired initialisation type
+    // Eigen::MatrixXd deformedVertices = arap(mesh, iterations, initType);
+
+    // // Update the selected control points' positions in the deformed mesh
+    // mesh.updateVertices(deformedVertices, selectedControlPoints);
+    // return true;
+    // }
+    // else if (mouseIsPressed && !needArap && moveSelectionMode)
+    // {
+    if (moveSelectionMode)
     {
         // TODO: update Mesh when vertex move
         // TODO: the moevment of the vertex seems wrong
-        drag(viewer, mesh);
+        Eigen::Vector3d projPoint = Eigen::Vector3d();
+        projectOnMoveDirection(viewer, projPoint);
+        // std::cout << lastProjectedPoint - projPoint << std::endl;
+        Eigen::RowVector3d mouseMovement = (lastProjectedPoint - projPoint).transpose();
+        lastProjectedPoint = projPoint;
+        for (auto &cpp : getSelectedControlPoints(mesh))
+        {
+            // std::cout << cpp << std::endl;
+            cpp->wantedVertexPosition += mouseMovement;
+            needArap = initialisationType == EInitialisationType::e_LastFrame;
+        }
         displaySelectedPoints(viewer, mesh);
         return true;
     }
-    else
-        return false;
 }
 
-// void InterfaceManager::projectOnMoveDirection(igl::opengl::glfw::Viewer &viewer, Eigen::Vector3d &projectionReceiver) const
-void InterfaceManager::projectOnMoveDirection(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Eigen::Vector3d &projectionReceiver) const
+void InterfaceManager::projectOnMoveDirection(igl::opengl::glfw::Viewer &viewer, Eigen::Vector3d &projectionReceiver) const
 {
     double x = viewer.current_mouse_x;
     double y = viewer.current_mouse_y;
 
     // move control points that are in the selection
     if (moveOnLine)
+    {
         // Move along a line
-        // igl::unproject_on_line(Eigen::Vector2f(x, y), viewer.core().proj, viewer.core().viewport, Eigen::Vector3d(1, 1, 1), firstMoveDirection, projectionReceiver);
-        igl::unproject_on_line(Eigen::Vector2f(x, y), viewer.core().proj, viewer.core().viewport, mesh.getVerticesFromIndex(getSelectedControlPointsIndex(mesh)), firstMoveDirection, projectionReceiver);
-
+        igl::unproject_on_line(Eigen::Vector2f(x, y), viewer.core().proj, viewer.core().viewport, Eigen::Vector3d(1, 1, 1), firstMoveDirection, projectionReceiver);
+    }
     else
     {
         // Mode along a plane
@@ -200,10 +215,10 @@ void InterfaceManager::displaySelectedPoints(igl::opengl::glfw::Viewer &viewer, 
     viewer.data().add_points(cppSelected, Eigen::RowVector3d(0, 1, 0));
     viewer.data().add_points(notCpSelected, Eigen::RowVector3d(1, 0, 0));
 
-    // if (moveOnLine && moveSelectionMode)
-    // {
-    //     displayMoveAxis(viewer, firstMoveDirection, cppSelected);
-    // }
+    if (moveOnLine && moveSelectionMode)
+    {
+        displayMoveAxis(viewer, firstMoveDirection, cppSelected);
+    }
 }
 
 void InterfaceManager::displayMoveAxis(igl::opengl::glfw::Viewer &viewer, const Eigen::Vector3d &axisVector, const Eigen::MatrixXd &cppSelected) const
@@ -217,17 +232,3 @@ void InterfaceManager::displayMoveAxis(igl::opengl::glfw::Viewer &viewer, const 
     Eigen::RowVector3d end = origin + axisTransposed * -5;
     viewer.data().add_edges(start, end, axisTransposed);
 }
-
-void InterfaceManager::drag(igl::opengl::glfw::Viewer &viewer, Mesh &mesh)
-{
-    Eigen::Vector3d projPoint = Eigen::Vector3d();
-    projectOnMoveDirection(viewer, projPoint);
-    // std::cout << lastProjectedPoint - projPoint << std::endl;
-    Eigen::RowVector3d mouseMovement = (lastProjectedPoint - projPoint).transpose();
-    lastProjectedPoint = projPoint;
-    for (auto &cpp : getSelectedControlPoints(mesh))
-    {
-        // std::cout << cpp << std::endl;
-        cpp->wantedVertexPosition += mouseMovement;
-    }
-};

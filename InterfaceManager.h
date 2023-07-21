@@ -16,7 +16,6 @@ private:
     std::vector<ControlPoint *> getSelectedControlPoints(Mesh &mesh) const;
     std::vector<int> getSelectedControlPointsIndex(const Mesh &mesh, bool invert = false) const;
     std::vector<int> getNonSelectedControlPointsIndex(const Mesh &mesh) const;
-    void drag(igl::opengl::glfw::Viewer &viewer, Mesh &mesh);
     void projectOnMoveDirection(igl::opengl::glfw::Viewer &viewer, Eigen::Vector3d &projectionReceiver) const;
     void displayMoveAxis(igl::opengl::glfw::Viewer &viewer, const Eigen::Vector3d &axisVector, const Eigen::MatrixXd &cppSelected) const;
 
