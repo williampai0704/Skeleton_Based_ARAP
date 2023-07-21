@@ -64,23 +64,6 @@ bool InterfaceManager::onMouseMoved(igl::opengl::glfw::Viewer &viewer, Mesh &mes
     if (!mouseIsPressed)
         return false;
 
-    // if (mouseIsPressed && needArap && moveSelectionMode)
-    // {
-    // TODO: Daniel need to fix this!!!!
-    // // Get the control points based on the current selection
-    // std::vector<int> selectedControlPoints = getSelectedControlPointsIndex(mesh);
-
-    // // Perform ARAP deformation only on the selected control points
-    // int iterations = 10;                                             // Set the number of iterations as needed
-    // EInitialisationType initType = EInitialisationType::e_LastFrame; // Set the desired initialisation type
-    // Eigen::MatrixXd deformedVertices = arap(mesh, iterations, initType);
-
-    // // Update the selected control points' positions in the deformed mesh
-    // mesh.updateVertices(deformedVertices, selectedControlPoints);
-    // return true;
-    // }
-    // else if (mouseIsPressed && !needArap && moveSelectionMode)
-    // {
     if (moveSelectionMode)
     {
         // TODO: update Mesh when vertex move
@@ -144,6 +127,21 @@ void InterfaceManager::onKeyPressed(igl::opengl::glfw::Viewer &viewer, Mesh &mes
         for (const auto &i : selection)
             mesh.removeControlPoint(i);
         displaySelectedPoints(viewer, mesh);
+    }
+    else if (key == 'X')
+    {
+        setMoveDirection(Eigen::Vector3d(1, 0, 0), isShiftPressed, viewer, mesh);
+        std::cout << "pressed Key: X" << std::endl;
+    }
+    else if (key == 'Y')
+    {
+        setMoveDirection(Eigen::Vector3d(0, 1, 0), isShiftPressed, viewer, mesh);
+        std::cout << "pressed Key: Y" << std::endl;
+    }
+    else if (key == 'Z')
+    {
+        setMoveDirection(Eigen::Vector3d(0, 0, 1), isShiftPressed, viewer, mesh);
+        std::cout << "pressed Key: Z" << std::endl;
     }
 }
 
@@ -231,4 +229,11 @@ void InterfaceManager::displayMoveAxis(igl::opengl::glfw::Viewer &viewer, const 
     Eigen::RowVector3d start = origin + axisTransposed * 5;
     Eigen::RowVector3d end = origin + axisTransposed * -5;
     viewer.data().add_edges(start, end, axisTransposed);
+}
+
+void InterfaceManager::setMoveDirection(const Eigen::Vector3d& direction, const bool& isShiftPressed, igl::opengl::glfw::Viewer& viewer, const Mesh& mesh)
+{
+    firstMoveDirection = direction;
+    moveOnLine = !isShiftPressed;
+    displaySelectedPoints(viewer, mesh);
 }

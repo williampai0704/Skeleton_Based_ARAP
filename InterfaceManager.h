@@ -18,6 +18,7 @@ private:
     std::vector<int> getNonSelectedControlPointsIndex(const Mesh &mesh) const;
     void projectOnMoveDirection(igl::opengl::glfw::Viewer &viewer, Eigen::Vector3d &projectionReceiver) const;
     void displayMoveAxis(igl::opengl::glfw::Viewer &viewer, const Eigen::Vector3d &axisVector, const Eigen::MatrixXd &cppSelected) const;
+    void setMoveDirection(const Eigen::Vector3d& direction, const bool& isShiftPressed, igl::opengl::glfw::Viewer& viewer, const Mesh& mesh);
 
 public:
     void onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, bool isShiftPressed);

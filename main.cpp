@@ -2,12 +2,22 @@
 #include <igl/opengl/glfw/Viewer.h>
 #include "Mesh.h"
 #include "InterfaceManager.h"
+#include "ARAP.h"
+
+void performARAP(Mesh& mesh, const EInitialisationType& initialisationType, igl::opengl::glfw::Viewer& viewer, const InterfaceManager& interfaceManager)
+{
+    mesh.V = arap(mesh, 100, initialisationType);
+    interfaceManager.displaySelectedPoints(viewer, mesh);
+    viewer.data().set_mesh(mesh.V, mesh.F);
+}
 
 int main(int argc, char *argv[])
 {
     Mesh mesh = Mesh();
 
     mesh.InitMesh(Mesh::MeshType::SKELETON);
+    mesh.V = mesh.V.rowwise() - mesh.V.colwise().mean();
+
     bool needToPerformArap = false;
     EInitialisationType initialisationType = EInitialisationType::e_LastFrame;
 
@@ -15,6 +25,16 @@ int main(int argc, char *argv[])
     igl::opengl::glfw::Viewer viewer;
     InterfaceManager interfaceManager = InterfaceManager();
 
+    viewer.callback_pre_draw = [&interfaceManager, &mesh, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer& viewer)->bool
+    {
+        if (needToPerformArap)
+        {
+            performARAP(mesh, initialisationType, viewer, interfaceManager);
+            needToPerformArap = false;
+        }
+
+        return false;
+    };
     viewer.callback_mouse_down = [&interfaceManager, &mesh](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
     {
         interfaceManager.onMousePressed(viewer, mesh, modifier & 0x00000001);
