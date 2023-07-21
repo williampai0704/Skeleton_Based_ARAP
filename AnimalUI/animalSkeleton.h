@@ -1,4 +1,4 @@
-#include "../Pinocchio/skeleton.h"
+#include "../Libs/Pinocchio/skeleton.h"
 
 class PINOCCHIO_API AnimalSkeleton : public Skeleton
 {

@@ -18,7 +18,6 @@
 
 // Pinocchio.cpp : Defines the entry point for the DLL application.
 
-#include "windows.h"
 #include "Pinocchio.h"
 
 #ifdef _MANAGED

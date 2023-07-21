@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #include "defmesh.h"
 #include "motion.h"
-#include "../Pinocchio/intersector.h"
+#include "../Libs/Pinocchio/intersector.h"
 
 vector<Transform<> > DefMesh::computeTransforms() const
 {

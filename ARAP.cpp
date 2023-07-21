@@ -117,7 +117,7 @@ MatrixXd compute_b(const MatrixXd& W,
                    const std::vector<MatrixXd>& R, 
                    const std::vector<ControlPoint>& C)
 {
-    MatrixXd b = MatrixXd::Zero(V.rows(),V.rows());
+    MatrixXd b = MatrixXd::Zero(V.rows(),V.cols());
     for (int i = 0; i <= V.rows(); i++)
     {
         VectorXd vi = V.row(i);
