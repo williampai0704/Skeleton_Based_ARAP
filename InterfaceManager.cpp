@@ -1,10 +1,15 @@
 #include "InterfaceManager.h"
 #include <igl/unproject_onto_mesh.h>
+#include <igl/unproject_on_line.h>
+#include <igl/unproject_on_plane.h>
+#include "ARAP.h"
 
 void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, bool isShiftPressed)
 {
     std::cout << "Mouse pressed" << std::endl;
     mouseIsPressed = true;
+    if (moveSelectionMode)
+        return;
 
     int fid;
     Eigen::Vector3d bc;
@@ -53,19 +58,99 @@ void InterfaceManager::onMouseReleased()
 
 bool InterfaceManager::onMouseMoved(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, bool &needArap, const EInitialisationType &initialisationType)
 {
-    return false;
+    if (mouseIsPressed && needArap && moveSelectionMode)
+    {
+        // TODO: Daniel need to fix this!!!!
+        // // Get the control points based on the current selection
+        // std::vector<int> selectedControlPoints = getSelectedControlPointsIndex(mesh);
+
+        // // Perform ARAP deformation only on the selected control points
+        // int iterations = 10;                                             // Set the number of iterations as needed
+        // EInitialisationType initType = EInitialisationType::e_LastFrame; // Set the desired initialisation type
+        // Eigen::MatrixXd deformedVertices = arap(mesh, iterations, initType);
+
+        // // Update the selected control points' positions in the deformed mesh
+        // mesh.updateVertices(deformedVertices, selectedControlPoints);
+        // return true;
+    }
+    else if (mouseIsPressed && !needArap && moveSelectionMode)
+    {
+        // TODO: update Mesh when vertex move
+        // TODO: the moevment of the vertex seems wrong
+        drag(viewer, mesh);
+        displaySelectedPoints(viewer, mesh);
+        return true;
+    }
+    else
+        return false;
+}
+
+// void InterfaceManager::projectOnMoveDirection(igl::opengl::glfw::Viewer &viewer, Eigen::Vector3d &projectionReceiver) const
+void InterfaceManager::projectOnMoveDirection(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Eigen::Vector3d &projectionReceiver) const
+{
+    double x = viewer.current_mouse_x;
+    double y = viewer.current_mouse_y;
+
+    // move control points that are in the selection
+    if (moveOnLine)
+        // Move along a line
+        // igl::unproject_on_line(Eigen::Vector2f(x, y), viewer.core().proj, viewer.core().viewport, Eigen::Vector3d(1, 1, 1), firstMoveDirection, projectionReceiver);
+        igl::unproject_on_line(Eigen::Vector2f(x, y), viewer.core().proj, viewer.core().viewport, mesh.getVerticesFromIndex(getSelectedControlPointsIndex(mesh)), firstMoveDirection, projectionReceiver);
+
+    else
+    {
+        // Mode along a plane
+        Eigen::Vector4f planeEquation = Eigen::Vector4f(firstMoveDirection.x(), firstMoveDirection.y(), firstMoveDirection.z(), 3);
+        igl::unproject_on_plane(Eigen::Vector2f(x, y), viewer.core().proj, viewer.core().viewport, planeEquation, projectionReceiver);
+    }
 }
 
 void InterfaceManager::onKeyPressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, unsigned char key, bool isShiftPressed, bool &needArap, EInitialisationType &initType)
 {
-    std::cout << "pressed Key: " << key << " " << (unsigned int)key << std::endl;
+    // std::cout << "pressed Key: " << key << " " << (unsigned int)key << std::endl;
     shiftIsPressed = isShiftPressed;
+    if (key == 'M')
+    {
+        moveSelectionMode = !moveSelectionMode;
+        std::cout << "pressed Key: M / mode: " << moveSelectionMode << std::endl;
+    }
+    else if (key == 'C')
+    {
+        for (const auto &i : selection)
+        {
+            mesh.addControlPoint(i);
+        }
+
+        displaySelectedPoints(viewer, mesh);
+    }
+    else if (key == 'R')
+    {
+        int nbCP = mesh.getControlPointCount();
+        for (const auto &i : selection)
+            mesh.removeControlPoint(i);
+        displaySelectedPoints(viewer, mesh);
+    }
 }
 
 void InterfaceManager::onKeyReleased()
 {
-    std::cout << "Key Released" << std::endl;
+    // std::cout << "Key Released" << std::endl;
     shiftIsPressed = false;
+}
+
+std::vector<ControlPoint *> InterfaceManager::getSelectedControlPoints(Mesh &mesh) const
+{
+    std::vector<ControlPoint *> cp = mesh.getControlPointsW();
+    std::vector<ControlPoint *> selection_cp = std::vector<ControlPoint *>();
+    for (const auto &ptr : cp)
+        for (const auto &i : selection)
+            if (ptr->vertexIndexInMesh == i)
+            {
+                selection_cp.push_back(ptr);
+                break;
+            }
+
+    return selection_cp;
 }
 
 std::vector<int> InterfaceManager::getSelectedControlPointsIndex(const Mesh &mesh, bool invert) const
@@ -114,4 +199,35 @@ void InterfaceManager::displaySelectedPoints(igl::opengl::glfw::Viewer &viewer, 
     viewer.data().add_points(cpSelected, Eigen::RowVector3d(0, 1, 0));
     viewer.data().add_points(cppSelected, Eigen::RowVector3d(0, 1, 0));
     viewer.data().add_points(notCpSelected, Eigen::RowVector3d(1, 0, 0));
+
+    // if (moveOnLine && moveSelectionMode)
+    // {
+    //     displayMoveAxis(viewer, firstMoveDirection, cppSelected);
+    // }
 }
+
+void InterfaceManager::displayMoveAxis(igl::opengl::glfw::Viewer &viewer, const Eigen::Vector3d &axisVector, const Eigen::MatrixXd &cppSelected) const
+{
+    const Eigen::RowVector3d axisTransposed = axisVector.transpose();
+    Eigen::RowVector3d origin = Eigen::RowVector3d::Zero();
+    for (int i = 0; i < cppSelected.rows(); i++)
+        origin += cppSelected.row(i);
+
+    Eigen::RowVector3d start = origin + axisTransposed * 5;
+    Eigen::RowVector3d end = origin + axisTransposed * -5;
+    viewer.data().add_edges(start, end, axisTransposed);
+}
+
+void InterfaceManager::drag(igl::opengl::glfw::Viewer &viewer, Mesh &mesh)
+{
+    Eigen::Vector3d projPoint = Eigen::Vector3d();
+    projectOnMoveDirection(viewer, projPoint);
+    // std::cout << lastProjectedPoint - projPoint << std::endl;
+    Eigen::RowVector3d mouseMovement = (lastProjectedPoint - projPoint).transpose();
+    lastProjectedPoint = projPoint;
+    for (auto &cpp : getSelectedControlPoints(mesh))
+    {
+        // std::cout << cpp << std::endl;
+        cpp->wantedVertexPosition += mouseMovement;
+    }
+};
