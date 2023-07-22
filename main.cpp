@@ -5,7 +5,6 @@
 #include "ARAP.h"
 #include <fstream>
 #include <string>
-#include "Libs/Pinocchio/Pinocchio.h"
 
 using namespace std;
 
