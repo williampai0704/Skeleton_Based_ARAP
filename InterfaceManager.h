@@ -12,19 +12,21 @@ private:
     Eigen::Vector3d lastProjectedPoint = Eigen::Vector3d(0, 0, 0);
     Eigen::Vector3d firstMoveDirection = Eigen::Vector3d(1, 0, 0);
     bool moveOnLine = true;
+    bool isBone = false;
 
     std::vector<ControlPoint *> getSelectedControlPoints(Mesh &mesh) const;
     std::vector<int> getSelectedControlPointsIndex(const Mesh &mesh, bool invert = false) const;
     std::vector<int> getNonSelectedControlPointsIndex(const Mesh &mesh) const;
     void projectOnMoveDirection(igl::opengl::glfw::Viewer &viewer, Eigen::Vector3d &projectionReceiver) const;
     void displayMoveAxis(igl::opengl::glfw::Viewer &viewer, const Eigen::Vector3d &axisVector, const Eigen::MatrixXd &cppSelected) const;
-    void setMoveDirection(const Eigen::Vector3d& direction, const bool& isShiftPressed, igl::opengl::glfw::Viewer& viewer, const Mesh& mesh);
+    void setMoveDirection(const Eigen::Vector3d& direction, const bool& isShiftPressed, igl::opengl::glfw::Viewer& viewer, const Mesh& mesh, const Mesh& bone);
 
 public:
-    void onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, bool isShiftPressed);
+    void onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, bool isShiftPressed);
     void onMouseReleased();
-    bool onMouseMoved(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, bool &needArap, const EInitialisationType &initialisationType);
-    void onKeyPressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, unsigned char key, bool isShiftPressed, bool &needArap, EInitialisationType &initType);
+    bool onMouseMoved(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, bool &needArap, const EInitialisationType &initialisationType);
+    void onKeyPressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, unsigned char key, bool isShiftPressed, bool &needArap, EInitialisationType &initType);
     void onKeyReleased();
-    void displaySelectedPoints(igl::opengl::glfw::Viewer &viewer, const Mesh &mesh) const;
+    void displaySelectedPoints(igl::opengl::glfw::Viewer &viewer, const Mesh &mesh, const Mesh &bone) const;
+    void displayBones(igl::opengl::glfw::Viewer &viewer, const Mesh &mesh, const Mesh &bone);
 };
