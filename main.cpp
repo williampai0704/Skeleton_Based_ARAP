@@ -137,7 +137,7 @@ struct Face {
 // Read vertices and faces 
 tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_off()
 {
-    string filePath = "./../mesh/pseudo_mesh.off";
+    string filePath = "./../mesh/pseudo_mesh_3.off";
     ifstream file(filePath);
     if (!file) {
         cerr << "cannot open file in read_off()" << endl;

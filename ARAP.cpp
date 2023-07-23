@@ -5,6 +5,7 @@ using namespace Eigen;
 #define tol 1e-3
 #define alpha 25.0
 
+
 std::pair<bool, Vector3d> isConstrained(const std::vector<ControlPoint>& C, int index) {
 
     for (const ControlPoint& c : C) {
@@ -74,7 +75,7 @@ double compute_total_energy(const MatrixXd& W,
 {
     double total_energy  = 0;
     total_energy += compute_reg_energy(W, Vi, Vi_p, R, N);
-    total_energy += compute_fit_energy(Vi, C);
+    total_energy += alpha * compute_fit_energy(Vi, C);
     return total_energy;
 }
 
