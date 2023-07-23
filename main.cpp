@@ -5,14 +5,27 @@
 #include "ARAP.h"
 #include <fstream>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
-void performARAP(Mesh& mesh, const EInitialisationType& initialisationType, igl::opengl::glfw::Viewer& viewer, const InterfaceManager& interfaceManager)
+Eigen::MatrixXd compute_bone(Eigen::MatrixXd V_mesh)
+{
+    Eigen::MatrixXd V_bone = Eigen::MatrixXd::Zero(V_mesh.rows()/5, 3);
+    for (int i = 0; i < V_bone.rows(); ++i)
+    {
+        V_bone.row(i) = V_mesh.row(i*5);
+        // cout << "i: " << i << ", i*5: " << i/5 << ", mesh.V.row(i*5): " << mesh.V.row(i*5) << endl;
+    }
+    return V_bone;
+}
+
+void performARAP(Mesh &mesh, Mesh &bone, const EInitialisationType& initialisationType, igl::opengl::glfw::Viewer& viewer, const InterfaceManager& interfaceManager)
 {
     mesh.V = arap(mesh, 100, initialisationType);
-    interfaceManager.displaySelectedPoints(viewer, mesh);
-    viewer.data().set_mesh(mesh.V, mesh.F);
+    bone.V = compute_bone(mesh.V);
+    interfaceManager.displaySelectedPoints(viewer, mesh, bone);
+    viewer.data().set_mesh(mesh.V, mesh.F);    // TODO: rebuild the code structure surrounding InterfaceManager::isBone
 }
 
 Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d& vector1, Eigen::Vector3d& vector2)
@@ -127,7 +140,7 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_off()
     string filePath = "./../mesh/pseudo_mesh.off";
     ifstream file(filePath);
     if (!file) {
-        cerr << "cannot open file" << endl;
+        cerr << "cannot open file in read_off()" << endl;
     }
     string header;
     int numVertices, numFaces, numEdges;
@@ -159,6 +172,40 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_off()
         F.row(i) = face;
     }
     file.close();
+    return std::tuple<Eigen::MatrixXd, Eigen::MatrixXi>{Vi,F};
+}
+
+tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_bone_txt()
+{
+    string filePath = "./../mesh/pinocchino_skeleton.txt";
+    ifstream infile(filePath);
+    if (!infile) {
+        cerr << "cannot open file in read_bone_txt()" << endl;
+    }
+    string header1, header2, header3, header4, header5;
+    // int numVertices, numFaces, numEdges;
+    int numFaces = 0;
+    int numVertices = std::count(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>(), '\n') - 1;
+    cout << "bone numVertices: " << numVertices << endl;
+    
+    ifstream file(filePath);
+    if (!file) {
+        cerr << "cannot open file in read_bone_txt()" << endl;
+    }
+    file >> header1 >> header2 >> header3 >> header4 >> header5;
+
+    Eigen::MatrixXd Vi(numVertices, 3);
+    Eigen::MatrixXi F(numFaces,3);
+
+    // Read vertices
+    for (int i = 0; i < numVertices; ++i) {
+        Eigen::Vector3d vertex;
+        int bummer1;
+        string bummer2, bummer_last;
+        file >> bummer1 >> bummer2 >> vertex(0) >> vertex(1) >> vertex(2) >> bummer_last;
+        // cout << "file: " << bummer1 << " " << bummer2 << " " << vertex[0] << " " << vertex[1] << " " << vertex[2] << " " << bummer_last << endl;
+        Vi.row(i) = vertex;
+    } 
     return std::tuple<Eigen::MatrixXd, Eigen::MatrixXi>{Vi,F};
 }
 
@@ -207,12 +254,24 @@ int main(int argc, char *argv[])
     mesh.V = get<0>(offFile);
     mesh.F = get<1>(offFile);
     Eigen::MatrixXd W = read_attachment();
+
+    Mesh bone = Mesh();
+
+    // get bone V method 1: read bone txt (DEPRECIATED! DON'T USE THIS)
+    // std::tuple<Eigen::MatrixXd, Eigen::MatrixXi> boneFile = read_bone_txt();
+    // bone.V = get<0>(boneFile);
+    // bone.F = get<1>(boneFile);
+
+    // get bone V method 2: read from off file (first line of 5 lines is bone)
+    bone.V = compute_bone(mesh.V);
+
     cout << "Reading complete !" << endl;
 
     // mesh.InitMesh(Mesh::MeshType::SKELETON);
 
-    // Center the mesh
-    mesh.V = mesh.V.rowwise() - mesh.V.colwise().mean();
+    // // Center the mesh
+    // mesh.V = mesh.V.rowwise() - mesh.V.colwise().mean();
+    // bone.V = bone.V.rowwise() - bone.V.colwise().mean();
 
     cout << mesh.V.rows() << " vertices loaded." << endl;
     cout << mesh.F.rows() << " faces loaded" << endl;
@@ -242,13 +301,13 @@ int main(int argc, char *argv[])
     igl::opengl::glfw::Viewer viewer;
     InterfaceManager interfaceManager = InterfaceManager();
 
-    viewer.callback_pre_draw = [&interfaceManager, &mesh, &needToPerformArap, &initialisationType, &W](igl::opengl::glfw::Viewer& viewer)->bool
+    viewer.callback_pre_draw = [&interfaceManager, &mesh, &bone, &needToPerformArap, &initialisationType, &W](igl::opengl::glfw::Viewer& viewer)->bool
     {
         if (needToPerformArap)
         {
             // std::cout << "Current mesh.V: " << mesh.V << std::endl;
             Eigen::MatrixXd V_previous = mesh.V;
-            performARAP(mesh, initialisationType, viewer, interfaceManager);
+            performARAP(mesh, bone, initialisationType, viewer, interfaceManager);
             Eigen::MatrixXd V_after = mesh.V;
             needToPerformArap = false;
             // std::cout << "mesh.V after ARAP: " << mesh.V << std::endl;
@@ -257,9 +316,9 @@ int main(int argc, char *argv[])
 
         return false;
     };
-    viewer.callback_mouse_down = [&interfaceManager, &mesh](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
+    viewer.callback_mouse_down = [&interfaceManager, &mesh, &bone](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
     {
-        interfaceManager.onMousePressed(viewer, mesh, modifier & 0x00000001);
+        interfaceManager.onMousePressed(viewer, mesh, bone, modifier & 0x00000001);
         return false;
     };
     viewer.callback_mouse_up = [&interfaceManager](igl::opengl::glfw::Viewer &viewer, int, int) -> bool
@@ -267,13 +326,13 @@ int main(int argc, char *argv[])
         interfaceManager.onMouseReleased();
         return false;
     };
-    viewer.callback_mouse_move = [&interfaceManager, &mesh, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
+    viewer.callback_mouse_move = [&interfaceManager, &mesh, &bone, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
     {
-        return interfaceManager.onMouseMoved(viewer, mesh, needToPerformArap, initialisationType);
+        return interfaceManager.onMouseMoved(viewer, mesh, bone, needToPerformArap, initialisationType);
     };
-    viewer.callback_key_down = [&interfaceManager, &mesh, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
+    viewer.callback_key_down = [&interfaceManager, &mesh, &bone, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
     {
-        interfaceManager.onKeyPressed(viewer, mesh, key, modifier & 0x00000001, needToPerformArap, initialisationType);
+        interfaceManager.onKeyPressed(viewer, mesh, bone, key, modifier & 0x00000001, needToPerformArap, initialisationType);
         return false;
     };
     viewer.callback_key_up = [&interfaceManager, &mesh, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
