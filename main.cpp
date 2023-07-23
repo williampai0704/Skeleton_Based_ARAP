@@ -222,6 +222,20 @@ int main(int argc, char *argv[])
 
     // Compute neightbours and weights and matrix
     mesh.computeL_W_N();
+
+    // // Check N metrix
+    cout << "N" << endl;
+    for (int i = 0; i < mesh.N.size(); i++)
+    {
+        cout << "face" << i << endl;
+        std::list<int> n = mesh.N[i];
+        for (std::list<int>::iterator it = n.begin(); it != n.end(); ++it)
+        {
+            cout << *it << " ";
+        }
+        cout << endl;
+    }
+
     const Eigen::MatrixXd V_save = mesh.V;
 
     // Set up interface
@@ -238,7 +252,7 @@ int main(int argc, char *argv[])
             Eigen::MatrixXd V_after = mesh.V;
             needToPerformArap = false;
             // std::cout << "mesh.V after ARAP: " << mesh.V << std::endl;
-            compute_LSB(V_previous,V_after,W);
+            // compute_LSB(V_previous,V_after,W);
         }
 
         return false;
