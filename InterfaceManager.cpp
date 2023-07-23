@@ -28,7 +28,7 @@ void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &m
 
         if (isShiftPressed)
         {
-            int selectedVertexIndex = mesh.F.row(fid)[closestVertex];
+            int selectedVertexIndex = (int)mesh.F.row(fid)[closestVertex] / 5 * 5;
             int indexOnVectorIfExists = -1;
             for (int i = 0; i < selection.size(); i++)
                 if (selection[i] == selectedVertexIndex)
@@ -44,7 +44,7 @@ void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &m
         else
         {
             selection.clear();
-            selection.push_back(mesh.F.row(fid)[closestVertex]);
+            selection.push_back((int)mesh.F.row(fid)[closestVertex] / 5 * 5);
         }
     }
     else if (isShiftPressed)
