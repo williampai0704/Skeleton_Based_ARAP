@@ -25,6 +25,7 @@ public:
 	void InitMesh(Eigen::MatrixXd V, Eigen::MatrixXi F);
 	std::vector<std::list<int>> N; // neighboors
 	Eigen::MatrixXd W;			   // weight
+	Eigen::MatrixXd Surface;
 
 	Eigen::MatrixXd getVerticesFromIndex(const std::vector<int> &indexes) const;
 

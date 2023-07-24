@@ -9,23 +9,9 @@
 
 using namespace std;
 
-Eigen::MatrixXd compute_bone(Eigen::MatrixXd V_mesh)
+void performARAP(Mesh &pseudo_mesh, Mesh &bone, const EInitialisationType& initialisationType, igl::opengl::glfw::Viewer& viewer, const InterfaceManager& interfaceManager)
 {
-    Eigen::MatrixXd V_bone = Eigen::MatrixXd::Zero(V_mesh.rows()/5, 3);
-    for (int i = 0; i < V_bone.rows(); ++i)
-    {
-        V_bone.row(i) = V_mesh.row(i*5);
-        // cout << "i: " << i << ", i*5: " << i/5 << ", mesh.V.row(i*5): " << mesh.V.row(i*5) << endl;
-    }
-    return V_bone;
-}
-
-void performARAP(Mesh &mesh, Mesh &bone, const EInitialisationType& initialisationType, igl::opengl::glfw::Viewer& viewer, const InterfaceManager& interfaceManager)
-{
-    mesh.V = arap(mesh, 100, initialisationType);
-    bone.V = compute_bone(mesh.V);
-    interfaceManager.displaySelectedPoints(viewer, mesh, bone);
-    viewer.data().set_mesh(mesh.V, mesh.F);    // TODO: rebuild the code structure surrounding InterfaceManager::isBone
+    pseudo_mesh.V = arap(pseudo_mesh, 100, initialisationType);    // TODO: rebuild the code structure surrounding InterfaceManager::isBone
 }
 
 Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d& vector1, Eigen::Vector3d& vector2)
@@ -78,8 +64,8 @@ Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d& vector1, Eigen::Vector3d& 
             transformationMatrix(2, 2) = scalingFactor;
 
             // Print the transformation matrix
-            std::cout << "Transformation Matrix (Scaling):" << std::endl;
-            std::cout << transformationMatrix << std::endl;
+            // std::cout << "Transformation Matrix (Scaling):" << std::endl;
+            // std::cout << transformationMatrix << std::endl;
 
             return transformationMatrix;
         }
@@ -117,18 +103,34 @@ Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d& vector1, Eigen::Vector3d& 
 }
 
 // Compute Linear Blend Skinning
-void compute_LBS(Eigen::MatrixXd V_previous, MatrixXd V_after, MatrixXd W)
+void compute_LBS(Eigen::MatrixXd B_previous, MatrixXd B_after, MatrixXd A, Mesh surface)
 {
-    std::vector<Eigen::Matrix4d> LSB;
-    for (int i = 0; i < V_previous.rows()-5; i+= 5)
+    std::vector<Eigen::Matrix4d> LBS;
+    for (int i = 0; i < B_previous.rows()-1; ++i)
     {
-        Eigen::Vector3d previousBone = V_previous.row(i+5) - V_previous.row(i);
-        Eigen::Vector3d newBone = V_after.row(i+5) - V_after.row(i);
+        Eigen::Vector3d previousBone = B_previous.row(i+1) - B_previous.row(i);
+        Eigen::Vector3d newBone = B_after.row(i+1) - B_after.row(i);
         Eigen::Matrix4d M = compute_trans_matrix(previousBone,newBone);
-        LSB.push_back(M);
-        std::cout << i/5 << std::endl;
-        std::cout << M << std::endl;
+        LBS.push_back(M);
+        // std::cout << i << std::endl;
+        // std::cout << M << std::endl;
     }
+    MatrixXd new_Surface(surface.V.rows(),surface.V.cols());
+    for (int i = 0; i < surface.V.rows(); ++i)
+    {
+        Eigen::Matrix4d L;
+        for(int j = 0; j < B_previous.rows(); ++j)
+        {
+            L += LBS[j]* A.coeff(i,j);
+        }
+        Eigen::Vector4d input_temp;
+        input_temp << surface.V.row(i), 1;
+        Eigen::Vector4d output_temp = L * input_temp;
+        new_Surface.row(i) = output_temp.head<3>();
+    }
+    cout << "new surface" << new_Surface << endl;
+    surface.V = new_Surface;
+
 }
 
 struct Face {
@@ -136,9 +138,9 @@ struct Face {
 };
 
 // Read vertices and faces 
-tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_off()
+tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_pseudo_off()
 {
-    string filePath = "./../mesh/pseudo_mesh_3.off";
+    string filePath = "./../mesh/pseudo_mesh_5.off";
     ifstream file(filePath);
     if (!file) {
         cerr << "cannot open file in read_off()" << endl;
@@ -176,38 +178,67 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_off()
     return std::tuple<Eigen::MatrixXd, Eigen::MatrixXi>{Vi,F};
 }
 
-tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_bone_txt()
+tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_surface_off()
 {
-    string filePath = "./../mesh/pinocchino_skeleton.txt";
-    ifstream infile(filePath);
-    if (!infile) {
-        cerr << "cannot open file in read_bone_txt()" << endl;
-    }
-    string header1, header2, header3, header4, header5;
-    // int numVertices, numFaces, numEdges;
-    int numFaces = 0;
-    int numVertices = std::count(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>(), '\n') - 1;
-    cout << "bone numVertices: " << numVertices << endl;
-    
+    string filePath = "./../mesh/bear_original.off";
     ifstream file(filePath);
     if (!file) {
-        cerr << "cannot open file in read_bone_txt()" << endl;
+        cerr << "cannot open file in read_off()" << endl;
     }
-    file >> header1 >> header2 >> header3 >> header4 >> header5;
+    string header;
+    int numVertices, numFaces, numEdges;
+    
+    file >> header >> numVertices >> numFaces >> numEdges;
 
     Eigen::MatrixXd Vi(numVertices, 3);
     Eigen::MatrixXi F(numFaces,3);
 
+    if (header != "COFF") {
+        cerr << "Not off file!" << endl;
+    }
     // Read vertices
     for (int i = 0; i < numVertices; ++i) {
         Eigen::Vector3d vertex;
-        int bummer1;
-        string bummer2, bummer_last;
-        file >> bummer1 >> bummer2 >> vertex(0) >> vertex(1) >> vertex(2) >> bummer_last;
-        // cout << "file: " << bummer1 << " " << bummer2 << " " << vertex[0] << " " << vertex[1] << " " << vertex[2] << " " << bummer_last << endl;
+        file >> vertex(0) >> vertex(1) >> vertex(2);
+        // cout << vertex[0] << " " << vertex[1] << " " << vertex[2] << endl;
         Vi.row(i) = vertex;
     } 
+    // Read faces
+    for (int i = 0; i < numFaces; ++i) {
+        int numVerticesInFace;
+        file >> numVerticesInFace;
+        if (numVerticesInFace != 3) {
+            cerr << "only support traingular mesh" << endl;
+        }
+        Eigen::Vector3i face;
+        file >> face[0] >> face[1] >> face[2];
+        F.row(i) = face;
+    }
+    file.close();
     return std::tuple<Eigen::MatrixXd, Eigen::MatrixXi>{Vi,F};
+}
+
+Eigen::MatrixXd get_Bone(Eigen::MatrixXd V)
+{
+    string filePath = "./../mesh/pinocchino_match.txt";
+    ifstream file(filePath);
+    int numBones;
+    file >> numBones;
+    Eigen::MatrixXd Bi(numBones,2);
+    for (int i = 0; i < numBones; ++i) 
+    {
+        Eigen::Vector2d vertex;
+        file >> vertex(0) >> vertex(1);
+        // cout << vertex[0] << " " << vertex[1] << " " << vertex[2] << endl;
+        Bi.row(i) = vertex;
+    } 
+    Eigen::MatrixXd B(numBones,3);
+    for (int i = 0; i < numBones; ++i)
+    {
+        Eigen::Vector2d index = Bi.row(i);
+        B.row(index[0]) = V.row(index[1]);
+    }
+    return B;
 }
 
 Eigen::MatrixXd read_attachment()
@@ -247,41 +278,44 @@ Eigen::MatrixXd read_attachment()
     return matrix;
 }
 
+
 int main(int argc, char *argv[])
 {
-    Mesh mesh = Mesh();
-
-    std::tuple<Eigen::MatrixXd, Eigen::MatrixXi> offFile = read_off();
-    mesh.V = get<0>(offFile);
-    mesh.F = get<1>(offFile);
-    Eigen::MatrixXd W = read_attachment();
-
+    Mesh pseudo_mesh = Mesh();
+    Mesh surface = Mesh();
     Mesh bone = Mesh();
 
-    // get bone V method 1: read bone txt (DEPRECIATED! DON'T USE THIS)
-    // std::tuple<Eigen::MatrixXd, Eigen::MatrixXi> boneFile = read_bone_txt();
-    // bone.V = get<0>(boneFile);
-    // bone.F = get<1>(boneFile);
+    std::tuple<Eigen::MatrixXd, Eigen::MatrixXi> poffFile = read_pseudo_off();
+    pseudo_mesh.V = get<0>(poffFile);
+    pseudo_mesh.F = get<1>(poffFile);
 
-    // get bone V method 2: read from off file (first line of 5 lines is bone)
-    bone.V = compute_bone(mesh.V);
+    std::tuple<Eigen::MatrixXd, Eigen::MatrixXi> offFile = read_surface_off();
+    surface.V = get<0>(offFile);
+    surface.F = get<1>(offFile);
 
+    Eigen::MatrixXd A = read_attachment();
+    
     cout << "Reading complete !" << endl;
 
     // mesh.InitMesh(Mesh::MeshType::SKELETON);
 
     // // Center the mesh
-    // mesh.V = mesh.V.rowwise() - mesh.V.colwise().mean();
-    // bone.V = bone.V.rowwise() - bone.V.colwise().mean();
+    pseudo_mesh.V = pseudo_mesh.V.rowwise() - pseudo_mesh.V.colwise().mean();
+    surface.V = surface.V.rowwise() - surface.V.colwise().mean();
 
-    cout << mesh.V.rows() << " vertices loaded." << endl;
-    cout << mesh.F.rows() << " faces loaded" << endl;
+    bone.V = get_Bone(pseudo_mesh.V);
+
+
+    cout << pseudo_mesh.V.rows() << " vertices loaded." << endl;
+    cout << pseudo_mesh.F.rows() << " faces loaded" << endl;
+    cout << surface.V.rows() << " vertices loaded." << endl;
+    cout << surface.F.rows() << " faces loaded" << endl;
 
     bool needToPerformArap = false;
     EInitialisationType initialisationType = EInitialisationType::e_LastFrame;
 
     // Compute neightbours and weights and matrix
-    mesh.computeL_W_N();
+    pseudo_mesh.computeL_W_N();
 
     // // Check N metrix
     // cout << "N" << endl;
@@ -296,30 +330,35 @@ int main(int argc, char *argv[])
     //     cout << endl;
     // }
 
-    const Eigen::MatrixXd V_save = mesh.V;
+    const Eigen::MatrixXd V_save = pseudo_mesh.V;
 
     // Set up interface
     igl::opengl::glfw::Viewer viewer;
     InterfaceManager interfaceManager = InterfaceManager();
 
-    viewer.callback_pre_draw = [&interfaceManager, &mesh, &bone, &needToPerformArap, &initialisationType, &W](igl::opengl::glfw::Viewer& viewer)->bool
+    viewer.callback_pre_draw = [&interfaceManager, &pseudo_mesh, &bone, &surface, &needToPerformArap, &initialisationType, &A](igl::opengl::glfw::Viewer& viewer)->bool
     {
         if (needToPerformArap)
         {
             // std::cout << "Current mesh.V: " << mesh.V << std::endl;
-            Eigen::MatrixXd V_previous = mesh.V;
-            performARAP(mesh, bone, initialisationType, viewer, interfaceManager);
-            Eigen::MatrixXd V_after = mesh.V;
+            Eigen::MatrixXd B_previous = get_Bone(pseudo_mesh.V);
+            performARAP(pseudo_mesh, bone, initialisationType, viewer, interfaceManager);
+            Eigen::MatrixXd B_after = get_Bone(pseudo_mesh.V);
+            compute_LBS(B_previous,B_after, A, surface);
+            bone.V = get_Bone(pseudo_mesh.V);
+            interfaceManager.displaySelectedPoints(viewer, pseudo_mesh, bone);
+            viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
+            viewer.data().set_mesh(surface.V, surface.F);
             needToPerformArap = false;
             // std::cout << "mesh.V after ARAP: " << mesh.V << std::endl;
-            compute_LBS(V_previous,V_after,W);
+            
         }
 
         return false;
     };
-    viewer.callback_mouse_down = [&interfaceManager, &mesh, &bone](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
+    viewer.callback_mouse_down = [&interfaceManager, &pseudo_mesh, &bone](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
     {
-        interfaceManager.onMousePressed(viewer, mesh, bone, modifier & 0x00000001);
+        interfaceManager.onMousePressed(viewer, pseudo_mesh, bone, modifier & 0x00000001);
         return false;
     };
     viewer.callback_mouse_up = [&interfaceManager](igl::opengl::glfw::Viewer &viewer, int, int) -> bool
@@ -327,22 +366,23 @@ int main(int argc, char *argv[])
         interfaceManager.onMouseReleased();
         return false;
     };
-    viewer.callback_mouse_move = [&interfaceManager, &mesh, &bone, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
+    viewer.callback_mouse_move = [&interfaceManager, &pseudo_mesh, &bone, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
     {
-        return interfaceManager.onMouseMoved(viewer, mesh, bone, needToPerformArap, initialisationType);
+        return interfaceManager.onMouseMoved(viewer, pseudo_mesh, bone, needToPerformArap, initialisationType);
     };
-    viewer.callback_key_down = [&interfaceManager, &mesh, &bone, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
+    viewer.callback_key_down = [&interfaceManager, &pseudo_mesh, &bone, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
     {
-        interfaceManager.onKeyPressed(viewer, mesh, bone, key, modifier & 0x00000001, needToPerformArap, initialisationType);
+        interfaceManager.onKeyPressed(viewer, pseudo_mesh, bone, key, modifier & 0x00000001, needToPerformArap, initialisationType);
         return false;
     };
-    viewer.callback_key_up = [&interfaceManager, &mesh, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
+    viewer.callback_key_up = [&interfaceManager, &pseudo_mesh, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
     {
         interfaceManager.onKeyReleased();
         return false;
     };
 
-    viewer.data().set_mesh(mesh.V, mesh.F);
+    viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
+    viewer.data().set_mesh(surface.V, surface.F);
     viewer.data().set_face_based(true);
     viewer.launch();
 }
