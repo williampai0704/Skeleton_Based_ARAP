@@ -116,7 +116,8 @@ Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d& vector1, Eigen::Vector3d& 
     // std::cout << transformationMatrix << std::endl;
 }
 
-void compute_LSB(Eigen::MatrixXd V_previous, MatrixXd V_after, MatrixXd W)
+// Compute Linear Blend Skinning
+void compute_LBS(Eigen::MatrixXd V_previous, MatrixXd V_after, MatrixXd W)
 {
     std::vector<Eigen::Matrix4d> LSB;
     for (int i = 0; i < V_previous.rows()-5; i+= 5)
@@ -283,17 +284,17 @@ int main(int argc, char *argv[])
     mesh.computeL_W_N();
 
     // // Check N metrix
-    cout << "N" << endl;
-    for (int i = 0; i < mesh.N.size(); i++)
-    {
-        cout << "face" << i << endl;
-        std::list<int> n = mesh.N[i];
-        for (std::list<int>::iterator it = n.begin(); it != n.end(); ++it)
-        {
-            cout << *it << " ";
-        }
-        cout << endl;
-    }
+    // cout << "N" << endl;
+    // for (int i = 0; i < mesh.N.size(); i++)
+    // {
+    //     cout << "face" << i << endl;
+    //     std::list<int> n = mesh.N[i];
+    //     for (std::list<int>::iterator it = n.begin(); it != n.end(); ++it)
+    //     {
+    //         cout << *it << " ";
+    //     }
+    //     cout << endl;
+    // }
 
     const Eigen::MatrixXd V_save = mesh.V;
 
@@ -311,7 +312,7 @@ int main(int argc, char *argv[])
             Eigen::MatrixXd V_after = mesh.V;
             needToPerformArap = false;
             // std::cout << "mesh.V after ARAP: " << mesh.V << std::endl;
-            // compute_LSB(V_previous,V_after,W);
+            compute_LBS(V_previous,V_after,W);
         }
 
         return false;
