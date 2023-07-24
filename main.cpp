@@ -11,7 +11,7 @@ using namespace std;
 
 void performARAP(Mesh &pseudo_mesh, Mesh &bone, const EInitialisationType& initialisationType, igl::opengl::glfw::Viewer& viewer, const InterfaceManager& interfaceManager)
 {
-    pseudo_mesh.V = arap(pseudo_mesh, 100, initialisationType);    // TODO: rebuild the code structure surrounding InterfaceManager::isBone
+    pseudo_mesh.V = arap(pseudo_mesh, 100, initialisationType);
 }
 
 Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d& vector1, Eigen::Vector3d& vector2)
@@ -180,7 +180,7 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_pseudo_off()
 
 tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_surface_off()
 {
-    string filePath = "./../mesh/bear_original.off";
+    string filePath = "./../mesh/bear_original_shrinked.off";
     ifstream file(filePath);
     if (!file) {
         cerr << "cannot open file in read_off()" << endl;
@@ -300,11 +300,10 @@ int main(int argc, char *argv[])
     // mesh.InitMesh(Mesh::MeshType::SKELETON);
 
     // // Center the mesh
-    pseudo_mesh.V = pseudo_mesh.V.rowwise() - pseudo_mesh.V.colwise().mean();
-    surface.V = surface.V.rowwise() - surface.V.colwise().mean();
+    // pseudo_mesh.V = pseudo_mesh.V.rowwise() - pseudo_mesh.V.colwise().mean();
+    // surface.V = surface.V.rowwise() - surface.V.colwise().mean();
 
     bone.V = get_Bone(pseudo_mesh.V);
-
 
     cout << pseudo_mesh.V.rows() << " vertices loaded." << endl;
     cout << pseudo_mesh.F.rows() << " faces loaded" << endl;
@@ -347,8 +346,9 @@ int main(int argc, char *argv[])
             compute_LBS(B_previous,B_after, A, surface);
             bone.V = get_Bone(pseudo_mesh.V);
             interfaceManager.displaySelectedPoints(viewer, pseudo_mesh, bone);
-            viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
-            viewer.data().set_mesh(surface.V, surface.F);
+            // viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
+            if (!interfaceManager.isBone)
+                viewer.data().set_mesh(surface.V, surface.F);
             needToPerformArap = false;
             // std::cout << "mesh.V after ARAP: " << mesh.V << std::endl;
             
@@ -370,9 +370,9 @@ int main(int argc, char *argv[])
     {
         return interfaceManager.onMouseMoved(viewer, pseudo_mesh, bone, needToPerformArap, initialisationType);
     };
-    viewer.callback_key_down = [&interfaceManager, &pseudo_mesh, &bone, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
+    viewer.callback_key_down = [&interfaceManager, &pseudo_mesh, &bone, &surface, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
     {
-        interfaceManager.onKeyPressed(viewer, pseudo_mesh, bone, key, modifier & 0x00000001, needToPerformArap, initialisationType);
+        interfaceManager.onKeyPressed(viewer, pseudo_mesh, bone, surface, key, modifier & 0x00000001, needToPerformArap, initialisationType);
         return false;
     };
     viewer.callback_key_up = [&interfaceManager, &pseudo_mesh, &needToPerformArap, &initialisationType](igl::opengl::glfw::Viewer &viewer, unsigned char key, int modifier) -> bool
@@ -381,7 +381,7 @@ int main(int argc, char *argv[])
         return false;
     };
 
-    viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
+    // viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
     viewer.data().set_mesh(surface.V, surface.F);
     viewer.data().set_face_based(true);
     viewer.launch();
