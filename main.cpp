@@ -118,15 +118,17 @@ void compute_LBS(Eigen::MatrixXd B_previous, MatrixXd B_after, MatrixXd A, Mesh 
     MatrixXd new_Surface(surface.V.rows(),surface.V.cols());
     for (int i = 0; i < surface.V.rows(); ++i)
     {
+        cout << i << endl;
         Eigen::Matrix4d L;
         for(int j = 0; j < B_previous.rows(); ++j)
         {
             L += LBS[j]* A.coeff(i,j);
         }
-        Eigen::Vector4d input_temp;
-        input_temp << surface.V.row(i), 1;
+        Eigen::Vector3d vec3D = surface.V.row(i);
+        Eigen::Vector4d input_temp(vec3D[0],vec3D[1],vec3D[2], 1.0);
         Eigen::Vector4d output_temp = L * input_temp;
         new_Surface.row(i) = output_temp.head<3>();
+        cout << new_Surface.row(i) << endl;
     }
     cout << "new surface" << new_Surface << endl;
     surface.V = new_Surface;
