@@ -103,7 +103,7 @@ void InterfaceManager::projectOnMoveDirection(igl::opengl::glfw::Viewer &viewer,
     }
 }
 
-void InterfaceManager::onKeyPressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, unsigned char key, bool isShiftPressed, bool &needArap, EInitialisationType &initType)
+void InterfaceManager::onKeyPressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, Mesh &surface, unsigned char key, bool isShiftPressed, bool &needArap, EInitialisationType &initType)
 {
     // std::cout << "pressed Key: " << key << " " << (unsigned int)key << std::endl;
     shiftIsPressed = isShiftPressed;
@@ -145,7 +145,7 @@ void InterfaceManager::onKeyPressed(igl::opengl::glfw::Viewer &viewer, Mesh &mes
     }
     else if (key == 'B')
     {
-        displayBones(viewer, mesh, bone);
+        displayBones(viewer, mesh, bone, surface);
         std::cout << "pressed Key: B" << std::endl;
     }
 }
@@ -227,7 +227,7 @@ void InterfaceManager::displaySelectedPoints(igl::opengl::glfw::Viewer &viewer, 
         viewer.data().add_points(bone.V, Eigen::RowVector3d(1, 1, 1));
 }
 
-void InterfaceManager::displayBones(igl::opengl::glfw::Viewer &viewer, const Mesh &mesh, const Mesh &bone)
+void InterfaceManager::displayBones(igl::opengl::glfw::Viewer &viewer, const Mesh &mesh, const Mesh &bone, const Mesh &surface)
 {
     isBone = !isBone;
     // std::cout << bone.V << std::endl;
@@ -240,7 +240,8 @@ void InterfaceManager::displayBones(igl::opengl::glfw::Viewer &viewer, const Mes
     else
     {
         viewer.data().clear();
-        viewer.data().set_mesh(mesh.V, mesh.F);
+        // viewer.data().set_mesh(mesh.V, mesh.F);
+        viewer.data().set_mesh(surface.V, surface.F);
         displaySelectedPoints(viewer, mesh, bone);
     }
 }
