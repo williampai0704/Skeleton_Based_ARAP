@@ -75,7 +75,7 @@ double compute_total_energy(const MatrixXd& W,
 {
     double total_energy  = 0;
     total_energy += compute_reg_energy(W, Vi, Vi_p, R, N);
-    total_energy += alpha * compute_fit_energy(Vi, C);
+    // total_energy += alpha * compute_fit_energy(Vi, C);
     return total_energy;
 }
 
@@ -111,7 +111,15 @@ MatrixXd compute_covariance_matrix(const MatrixXd& W,
     return Si;
 }
 
-
+/* Compute the right-hand side of the equation
+ * W : Weight matrix
+ * N : Neighbors of all the vertices
+ * V : Mesh before rotation
+ * R : Rotations of each cell
+ * C : Constraints vertices
+ *
+ * Out : Right-hand side of the equation
+ */
 MatrixXd compute_b(const MatrixXd& W, 
                    const std::vector<std::list<int>>& N, 
                    const MatrixXd& V, 
@@ -249,6 +257,12 @@ MatrixXd laplacian_init(const Mesh& mesh) {
     #undef W
 }
 
+/* Apply arap algo
+ * mesh : Mesh
+ * init : Type of initialization (interactive or naive Laplacian)
+ *
+ * Out : Updated V + number of iteration and energy after the first and last iteration
+ */
 MatrixXd arap(const Mesh& mesh, const int& kmax, const EInitialisationType& init, int* outInterationNumber = nullptr, float* outInitialEnergy = nullptr, float* outFinalEnergy = nullptr)
 {
     #define V mesh.V
