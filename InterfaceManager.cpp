@@ -243,16 +243,18 @@ void InterfaceManager::displayBones(igl::opengl::glfw::Viewer &viewer, const Mes
     // std::cout << bone.V << std::endl;
     if (isBone)
     {
-        viewer.data().clear();
+        viewer.data(0).clear();
+        viewer.data(1).clear();
         displaySelectedPoints(viewer, mesh, bone);
         // viewer.data().add_points(bone.V, Eigen::RowVector3d(0, 0, 0));    // done in displaySelectedPoints() already
     }
     else
     {
-        viewer.data().clear();
-        viewer.data().set_mesh(mesh.V, mesh.F);
-        viewer.append_mesh();
-        viewer.data().set_mesh(surface.V, surface.F);
+        viewer.data(0).clear();
+        viewer.data(1).clear();
+        viewer.data(0).set_mesh(mesh.V, mesh.F);
+        // viewer.append_mesh();
+        viewer.data(1).set_mesh(surface.V, surface.F);
         displaySelectedPoints(viewer, mesh, bone);
     }
 }
