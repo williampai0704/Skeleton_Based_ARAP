@@ -250,7 +250,8 @@ void InterfaceManager::displayBones(igl::opengl::glfw::Viewer &viewer, const Mes
     else
     {
         viewer.data().clear();
-        // viewer.data().set_mesh(mesh.V, mesh.F);
+        viewer.data().set_mesh(mesh.V, mesh.F);
+        viewer.append_mesh();
         viewer.data().set_mesh(surface.V, surface.F);
         displaySelectedPoints(viewer, mesh, bone);
     }

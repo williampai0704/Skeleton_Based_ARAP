@@ -357,7 +357,11 @@ int main(int argc, char *argv[])
             interfaceManager.displaySelectedPoints(viewer, pseudo_mesh, bone);
             // viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
             if (!interfaceManager.isBone)
+            {
+                viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
+                viewer.append_mesh();
                 viewer.data().set_mesh(surface.V, surface.F);
+            }
             needToPerformArap = false;
             // std::cout << "mesh.V after ARAP: " << mesh.V << std::endl;
             
@@ -390,7 +394,8 @@ int main(int argc, char *argv[])
         return false;
     };
 
-    // viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
+    viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
+    viewer.append_mesh();
     viewer.data().set_mesh(surface.V, surface.F);
     viewer.data().set_face_based(true);
     viewer.launch();
