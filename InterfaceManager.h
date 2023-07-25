@@ -22,7 +22,7 @@ private:
 
 public:
     bool isBone = false;
-    void onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, bool isShiftPressed);
+    void onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, bool isShiftPressed, Eigen::MatrixXd bone_index);
     void onMouseReleased();
     bool onMouseMoved(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, bool &needArap, const EInitialisationType &initialisationType);
     void onKeyPressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, Mesh &surface, unsigned char key, bool isShiftPressed, bool &needArap, EInitialisationType &initType);

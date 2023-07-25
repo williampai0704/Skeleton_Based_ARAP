@@ -220,7 +220,7 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_surface_off()
     return std::tuple<Eigen::MatrixXd, Eigen::MatrixXi>{Vi,F};
 }
 
-Eigen::MatrixXd get_Bone(Eigen::MatrixXd V)
+tuple<Eigen::MatrixXd, Eigen::MatrixXd> get_Bone(Eigen::MatrixXd V)
 {
     string filePath = "./../mesh/pinocchino_match.txt";
     ifstream file(filePath);
@@ -240,7 +240,7 @@ Eigen::MatrixXd get_Bone(Eigen::MatrixXd V)
         Eigen::Vector2d index = Bi.row(i);
         B.row(index[0]) = V.row(index[1]);
     }
-    return B;
+    return std::tuple<Eigen::MatrixXd, Eigen::MatrixXd>{B, Bi};
 }
 
 Eigen::MatrixXd read_attachment()
@@ -305,7 +305,9 @@ int main(int argc, char *argv[])
     // pseudo_mesh.V = pseudo_mesh.V.rowwise() - pseudo_mesh.V.colwise().mean();
     // surface.V = surface.V.rowwise() - surface.V.colwise().mean();
 
-    bone.V = get_Bone(pseudo_mesh.V);
+    tuple<Eigen::MatrixXd, Eigen::MatrixXd> bone_tuple = get_Bone(pseudo_mesh.V);
+    bone.V = get<0>(bone_tuple);
+    Eigen::MatrixXd bone_index = get<1>(bone_tuple);
 
     cout << pseudo_mesh.V.rows() << " vertices loaded." << endl;
     cout << pseudo_mesh.F.rows() << " faces loaded" << endl;
@@ -342,11 +344,11 @@ int main(int argc, char *argv[])
         if (needToPerformArap)
         {
             // std::cout << "Current mesh.V: " << mesh.V << std::endl;
-            Eigen::MatrixXd B_previous = get_Bone(pseudo_mesh.V);
+            Eigen::MatrixXd B_previous = get<0>(get_Bone(pseudo_mesh.V));
             performARAP(pseudo_mesh, bone, initialisationType, viewer, interfaceManager);
-            Eigen::MatrixXd B_after = get_Bone(pseudo_mesh.V);
+            Eigen::MatrixXd B_after = get<0>(get_Bone(pseudo_mesh.V));
             compute_LBS(B_previous,B_after, A, surface);
-            bone.V = get_Bone(pseudo_mesh.V);
+            bone.V = get<0>(get_Bone(pseudo_mesh.V));
             interfaceManager.displaySelectedPoints(viewer, pseudo_mesh, bone);
             // viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
             if (!interfaceManager.isBone)
@@ -358,9 +360,9 @@ int main(int argc, char *argv[])
 
         return false;
     };
-    viewer.callback_mouse_down = [&interfaceManager, &pseudo_mesh, &bone](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
+    viewer.callback_mouse_down = [&interfaceManager, &pseudo_mesh, &bone, &bone_index](igl::opengl::glfw::Viewer &viewer, int, int modifier) -> bool
     {
-        interfaceManager.onMousePressed(viewer, pseudo_mesh, bone, modifier & 0x00000001);
+        interfaceManager.onMousePressed(viewer, pseudo_mesh, bone, modifier & 0x00000001, bone_index);
         return false;
     };
     viewer.callback_mouse_up = [&interfaceManager](igl::opengl::glfw::Viewer &viewer, int, int) -> bool
