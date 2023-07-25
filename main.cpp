@@ -14,7 +14,7 @@ void performARAP(Mesh &pseudo_mesh, Mesh &bone, const EInitialisationType& initi
     pseudo_mesh.V = arap(pseudo_mesh, 100, initialisationType);
 }
 
-Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d& vector1, Eigen::Vector3d& vector2)
+Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d vector1, Eigen::Vector3d vector2)
 {
     // Step 1: Normalize both vectors
     vector1.normalize();
@@ -103,7 +103,7 @@ Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d& vector1, Eigen::Vector3d& 
 }
 
 // Compute Linear Blend Skinning
-void compute_LBS(Eigen::MatrixXd B_previous, MatrixXd B_after, MatrixXd A, Mesh surface)
+void compute_LBS(Eigen::MatrixXd& B_previous, MatrixXd& B_after, MatrixXd& A, Mesh& surface)
 {
     std::vector<Eigen::Matrix4d> LBS;
     for (int i = 0; i < B_previous.rows()-1; ++i)
@@ -115,22 +115,26 @@ void compute_LBS(Eigen::MatrixXd B_previous, MatrixXd B_after, MatrixXd A, Mesh 
         // std::cout << i << std::endl;
         // std::cout << M << std::endl;
     }
+
     MatrixXd new_Surface(surface.V.rows(),surface.V.cols());
     for (int i = 0; i < surface.V.rows(); ++i)
     {
-        cout << i << endl;
-        Eigen::Matrix4d L;
-        for(int j = 0; j < B_previous.rows(); ++j)
+        // cout << i << endl;
+        Eigen::Matrix4d L = Matrix4d::Zero();
+        for(int j = 0; j < B_previous.rows()-1; ++j)
         {
-            L += LBS[j]* A.coeff(i,j);
+            // cout << j << endl;
+            L += LBS[j]* A(i,j);
         }
+        // cout << L << endl;
         Eigen::Vector3d vec3D = surface.V.row(i);
         Eigen::Vector4d input_temp(vec3D[0],vec3D[1],vec3D[2], 1.0);
         Eigen::Vector4d output_temp = L * input_temp;
         new_Surface.row(i) = output_temp.head<3>();
-        cout << new_Surface.row(i) << endl;
+        // cout << "finish" << endl;
+        // cout << new_Surface.row(i) << endl;
     }
-    cout << "new surface" << new_Surface << endl;
+    // cout << "new surface" << new_Surface << endl;
     surface.V = new_Surface;
 
 }
@@ -182,7 +186,7 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_pseudo_off()
 
 tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_surface_off()
 {
-    string filePath = "./../mesh/bear_original_shrinked.off";
+    string filePath = "./../mesh/bear_surface.off";
     ifstream file(filePath);
     if (!file) {
         cerr << "cannot open file in read_off()" << endl;
@@ -245,7 +249,7 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXd> get_Bone(Eigen::MatrixXd V)
 
 Eigen::MatrixXd read_attachment()
 {
-    string filePath = "./../mesh/attachment.out";
+    string filePath = "./../mesh/attachment_2.out";
     ifstream file(filePath);
     if (!file) {
         cerr << "cannot open file" << endl;
@@ -313,6 +317,7 @@ int main(int argc, char *argv[])
     cout << pseudo_mesh.F.rows() << " faces loaded" << endl;
     cout << surface.V.rows() << " vertices loaded." << endl;
     cout << surface.F.rows() << " faces loaded" << endl;
+    // cout << A.rows() << " " <<  A.cols() << " attachments loaded." << endl;
 
     bool needToPerformArap = false;
     EInitialisationType initialisationType = EInitialisationType::e_LastFrame;
