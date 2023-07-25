@@ -354,6 +354,7 @@ int main(int argc, char *argv[])
             Eigen::MatrixXd B_after = get<0>(get_Bone(pseudo_mesh.V));
             compute_LBS(B_previous,B_after, A, surface);
             bone.V = get<0>(get_Bone(pseudo_mesh.V));
+            viewer.data().clear();
             interfaceManager.displaySelectedPoints(viewer, pseudo_mesh, bone);
             // viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
             if (!interfaceManager.isBone)
