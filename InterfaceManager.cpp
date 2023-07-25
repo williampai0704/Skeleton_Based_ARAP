@@ -4,7 +4,7 @@
 #include <igl/unproject_on_plane.h>
 // #include "ARAP.h"
 
-void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, bool isShiftPressed)
+void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &mesh, Mesh &bone, bool isShiftPressed, Eigen::MatrixXd bone_index)
 {
     std::cout << "Mouse pressed" << std::endl;
     mouseIsPressed = true;
@@ -26,9 +26,19 @@ void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &m
             if (bc[i] > bc[closestVertex])
                 closestVertex = i;
 
+        int selectedVertexIndex = mesh.F.row(fid)[closestVertex];
+        for (int i = 0; i < bone_index.rows(); ++i)
+        {
+            Eigen::Vector2d index = bone_index.row(i);
+            if (selectedVertexIndex - index[1] < 5 && selectedVertexIndex - index[1] >= 0)
+            {
+                selectedVertexIndex = index[1];
+                break;
+            }
+        }
+
         if (isShiftPressed)
         {
-            int selectedVertexIndex = (int)mesh.F.row(fid)[closestVertex] / 5 * 5;
             int indexOnVectorIfExists = -1;
             for (int i = 0; i < selection.size(); i++)
                 if (selection[i] == selectedVertexIndex)
@@ -44,7 +54,7 @@ void InterfaceManager::onMousePressed(igl::opengl::glfw::Viewer &viewer, Mesh &m
         else
         {
             selection.clear();
-            selection.push_back((int)mesh.F.row(fid)[closestVertex] / 5 * 5);
+            selection.push_back(selectedVertexIndex);
         }
     }
     else if (isShiftPressed)
