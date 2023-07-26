@@ -5,7 +5,7 @@ using namespace Eigen;
 #define tol 1e-3
 #define alpha 25.0
 
-
+// Cehck if a point is a control point
 std::pair<bool, Vector3d> isConstrained(const std::vector<ControlPoint>& C, int index) {
 
     for (const ControlPoint& c : C) {
@@ -50,22 +50,24 @@ double compute_reg_energy(const MatrixXd& W,
     return energy;
 }
 
-double compute_fit_energy(const MatrixXd& Vi, const std::vector<ControlPoint>& C)
-{
-    double energy = 0;
-    for (int i = 0; i < Vi.rows(); i++)
-    {
-        std::pair<bool,Vector3d> constrained = isConstrained(C, i);
-        if (constrained.first)
-        {
-            VectorXd vi = Vi.row(i);
-            VectorXd ti = (VectorXd) constrained.second;
-            energy += pow((vi-ti).norm(), 2);
-        }
-    }
-    return energy;
-}
+// Compute fit energy (not used)
+// double compute_fit_energy(const MatrixXd& Vi, const std::vector<ControlPoint>& C)
+// {
+//     double energy = 0;
+//     for (int i = 0; i < Vi.rows(); i++)
+//     {
+//         std::pair<bool,Vector3d> constrained = isConstrained(C, i);
+//         if (constrained.first)
+//         {
+//             VectorXd vi = Vi.row(i);
+//             VectorXd ti = (VectorXd) constrained.second;
+//             energy += pow((vi-ti).norm(), 2);
+//         }
+//     }
+//     return energy;
+// }
 
+// Compute total ARAP energy
 double compute_total_energy(const MatrixXd& W,
                             const MatrixXd& Vi, 
                             const MatrixXd Vi_p, 
@@ -79,6 +81,7 @@ double compute_total_energy(const MatrixXd& W,
     return total_energy;
 }
 
+// Compute covariance matrix Si
 MatrixXd compute_covariance_matrix(const MatrixXd& W,
                                    const MatrixXd& Vi, 
                                    const MatrixXd& Vi_p, 
@@ -167,6 +170,7 @@ MatrixXd compute_b(const MatrixXd& W,
     return b; 
 }
 
+// Optimize roatation matrix R using SVD decomposition
 MatrixXd compute_Ri(const MatrixXd& W, 
                    const MatrixXd& Vi, 
                    const MatrixXd& Vi_p, 

@@ -122,13 +122,13 @@ void compute_LBS(Eigen::MatrixXd& B_previous, MatrixXd& B_after, MatrixXd& A, Me
     std::vector<Eigen::Matrix4d> LBS;
     for (int i = 0; i < B_previous.rows()-1; ++i)
     {
-        cout << i << endl;
+        // cout << i << endl;
         Eigen::Vector3d previousBone = B_previous.row(i+1) - B_previous.row(i);
         Eigen::Vector3d newBone = B_after.row(i+1) - B_after.row(i);
         Eigen::Matrix4d M = compute_trans_matrix(previousBone,newBone);
         LBS.push_back(M);
-        std::cout << i << std::endl;
-        std::cout << M << std::endl;
+        // std::cout << i << std::endl;
+        // std::cout << M << std::endl;
     }
 
     MatrixXd new_Surface(surface.V.rows(),surface.V.cols());
@@ -138,7 +138,7 @@ void compute_LBS(Eigen::MatrixXd& B_previous, MatrixXd& B_after, MatrixXd& A, Me
         Eigen::Matrix4d L = Matrix4d::Zero();
         for(int j = 0; j < B_previous.rows()-1; ++j)
         {
-            cout << j << endl;
+            // cout << j << endl;
             L += LBS[j]* A(i,j);
         }
         Eigen::Vector3d vec3D = surface.V.row(i);
