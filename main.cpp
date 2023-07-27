@@ -157,7 +157,8 @@ void compute_LBS(Eigen::MatrixXd& B_previous, MatrixXd& B_after, MatrixXd& A, Me
         // cout << i << endl;
         Eigen::Vector3d previousBone = B_previous.row(i) - B_previous.row(j);
         Eigen::Vector3d newBone = B_after.row(i) - B_after.row(j);
-        Eigen::Vector3d trans = B_after.row(i) - B_previous.row(i);
+        Eigen::Vector3d trans = (B_after.row(j) - B_previous.row(j));
+        trans += (newBone - previousBone) * 0.5;
         Eigen::Matrix4d M = compute_trans_matrix(previousBone, newBone, trans);
         LBS.push_back(M);
         // std::cout << i << std::endl;
