@@ -58,9 +58,10 @@ void performARAP(Mesh &pseudo_mesh, Mesh& bone, const EInitialisationType& initi
 // }
 
 // Compute 4*4 transformation matrix for Linear BLend Skinning
-Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d vector1, Eigen::Vector3d vector2)
+Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d vector1, Eigen::Vector3d vector2, Eigen::Vector3d trans)
 {
-    Eigen::Vector3d translation = vector2 - vector1;
+    // Eigen::Vector3d translation = vector2 - vector1;
+    Eigen::Vector3d translation = trans;
     double scalingFactor = vector2.norm() / vector1.norm();
     Eigen::Vector3d vector1p = vector1;
     Eigen::Vector3d vector2p = vector2;
@@ -116,16 +117,48 @@ Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d vector1, Eigen::Vector3d ve
     // std::cout << transformationMatrix << std::endl;
 }
 
+std::map<int, int > read_skeleton(){
+    string filePath = "./../mesh/skeleton.out";
+    ifstream file(filePath);
+    if (!file) {
+        cerr << "cannot open file" << filePath << endl;
+    }
+
+    // Read the data from the file and store it in a dynamic matrix
+    std::map<int, int> data;
+    std::string line;
+    while (std::getline(file, line)) {
+        int joint_id, prev_joint_id;
+        double x, y, z;
+        std::istringstream iss(line);
+        iss >> joint_id >> x >> y >> z >> prev_joint_id;
+        
+        data.insert(std::pair<int, int> (joint_id, prev_joint_id));
+    }
+    // Close the file after reading
+    file.close();
+
+    // for(auto it  = data.begin(); it != data.end(); it++)
+    //     std::cout << it->first << it->second << std::endl;
+
+    return data;
+
+}
+
 // Compute Linear Blend Skinning
-void compute_LBS(Eigen::MatrixXd& B_previous, MatrixXd& B_after, MatrixXd& A, Mesh& surface)
+void compute_LBS(Eigen::MatrixXd& B_previous, MatrixXd& B_after, MatrixXd& A, Mesh& surface, std::map<int, int> skeleton)
 {
     std::vector<Eigen::Matrix4d> LBS;
-    for (int i = 0; i < B_previous.rows()-1; ++i)
+   
+    for (int i = 0; i < B_previous.rows(); ++i)
     {
+        int j = skeleton[i];
+        if(j < 0) continue;
         // cout << i << endl;
-        Eigen::Vector3d previousBone = B_previous.row(i+1) - B_previous.row(i);
-        Eigen::Vector3d newBone = B_after.row(i+1) - B_after.row(i);
-        Eigen::Matrix4d M = compute_trans_matrix(previousBone,newBone);
+        Eigen::Vector3d previousBone = B_previous.row(i) - B_previous.row(j);
+        Eigen::Vector3d newBone = B_after.row(i) - B_after.row(j);
+        Eigen::Vector3d trans = B_after.row(i) - B_previous.row(i);
+        Eigen::Matrix4d M = compute_trans_matrix(previousBone, newBone, trans);
         LBS.push_back(M);
         // std::cout << i << std::endl;
         // std::cout << M << std::endl;
@@ -324,6 +357,8 @@ int main(int argc, char *argv[])
     Eigen::MatrixXd bone_index = get<1>(bone_tuple);
 
     Eigen::MatrixXd A = read_attachment();
+
+    std::map<int, int> skeleton = read_skeleton();
     
     cout << "Reading complete !" << endl;
 
@@ -363,7 +398,7 @@ int main(int argc, char *argv[])
     igl::opengl::glfw::Viewer viewer;
     InterfaceManager interfaceManager = InterfaceManager();
 
-    viewer.callback_pre_draw = [&interfaceManager, &pseudo_mesh, &bone, &surface, &needToPerformArap, &initialisationType, &A](igl::opengl::glfw::Viewer& viewer)->bool
+    viewer.callback_pre_draw = [&interfaceManager, &pseudo_mesh, &bone, &surface, &needToPerformArap, &initialisationType, &A, &skeleton](igl::opengl::glfw::Viewer& viewer)->bool
     {
         if (needToPerformArap)
         {
@@ -371,7 +406,7 @@ int main(int argc, char *argv[])
             Eigen::MatrixXd B_previous = get<0>(get_Bone(pseudo_mesh.V));
             performARAP(pseudo_mesh, bone, initialisationType, viewer, interfaceManager);
             Eigen::MatrixXd B_after = get<0>(get_Bone(pseudo_mesh.V));
-            compute_LBS(B_previous,B_after, A, surface);
+            compute_LBS(B_previous, B_after, A, surface, skeleton);
             bone.V = get<0>(get_Bone(pseudo_mesh.V));
             // viewer.data().clear();
             interfaceManager.displaySelectedPoints(viewer, pseudo_mesh, bone);
