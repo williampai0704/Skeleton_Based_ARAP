@@ -69,9 +69,6 @@ Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d vector1, Eigen::Vector3d ve
     }
     
     return transformationMatrix;
-    // // Print the transformation matrix
-    // std::cout << "Transformation Matrix:" << std::endl;
-    // std::cout << transformationMatrix << std::endl;
 }
 
 std::map<int, int > read_skeleton(){
@@ -118,8 +115,6 @@ void compute_LBS(Eigen::MatrixXd& B_previous, MatrixXd& B_after, MatrixXd& A, Me
         trans += (newBone - previousBone) * 0.5;
         Eigen::Matrix4d M = compute_trans_matrix(previousBone, newBone, trans);
         LBS.push_back(M);
-        // std::cout << i << std::endl;
-        // std::cout << M << std::endl;
     }
 
     MatrixXd new_Surface(surface.V.rows(),surface.V.cols());
@@ -240,7 +235,6 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXd> get_Bone(Eigen::MatrixXd V)
     {
         Eigen::Vector2d vertex;
         file >> vertex(0) >> vertex(1);
-        // cout << vertex[0] << " " << vertex[1] << " " << vertex[2] << endl;
         Bi.row(i) = vertex;
     } 
     Eigen::MatrixXd B(numBones,3);
@@ -293,10 +287,10 @@ Eigen::MatrixXd read_attachment()
 
 int main(int argc, char *argv[])
 {
-    // Initialize meshes
-    // pseudo_mesh = pseudo joints including bones
-    // surface = surface mesh 
-    // bone = bone vertices
+    /* Initialize meshes
+       pseudo_mesh = pseudo joints including bones
+       surface = surface mesh 
+       bone = bone vertices */
     Mesh pseudo_mesh = Mesh();
     Mesh surface = Mesh();
     Mesh bone = Mesh();
@@ -319,13 +313,6 @@ int main(int argc, char *argv[])
     std::map<int, int> skeleton = read_skeleton();
     
     cout << "Reading complete !" << endl;
-
-    // mesh.InitMesh(Mesh::MeshType::SKELETON);
-
-    // // Center the mesh
-    // pseudo_mesh.V = pseudo_mesh.V.rowwise() - pseudo_mesh.V.colwise().mean();
-    // surface.V = surface.V.rowwise() - surface.V.colwise().mean();
-
     cout << pseudo_mesh.V.rows() << " vertices loaded." << endl;
     cout << pseudo_mesh.F.rows() << " faces loaded" << endl;
     cout << surface.V.rows() << " vertices loaded." << endl;
@@ -336,19 +323,6 @@ int main(int argc, char *argv[])
 
     // Compute neightbours and weights and matrix
     pseudo_mesh.computeL_W_N();
-
-    // // Check N metrix
-    // cout << "N" << endl;
-    // for (int i = 0; i < mesh.N.size(); i++)
-    // {
-    //     cout << "face" << i << endl;
-    //     std::list<int> n = mesh.N[i];
-    //     for (std::list<int>::iterator it = n.begin(); it != n.end(); ++it)
-    //     {
-    //         cout << *it << " ";
-    //     }
-    //     cout << endl;
-    // }
 
     const Eigen::MatrixXd V_save = pseudo_mesh.V;
 
@@ -364,7 +338,7 @@ int main(int argc, char *argv[])
             Eigen::MatrixXd B_previous = get<0>(get_Bone(pseudo_mesh.V));
             performARAP(pseudo_mesh, bone, initialisationType, viewer, interfaceManager);
             Eigen::MatrixXd B_after = get<0>(get_Bone(pseudo_mesh.V));
-            compute_LBS(B_previous, B_after, A, surface, skeleton);
+            // compute_LBS(B_previous, B_after, A, surface, skeleton);
             bone.V = get<0>(get_Bone(pseudo_mesh.V));
             // viewer.data().clear();
             interfaceManager.displaySelectedPoints(viewer, pseudo_mesh, bone);
@@ -373,7 +347,7 @@ int main(int argc, char *argv[])
             {
                 viewer.data(0).set_mesh(pseudo_mesh.V, pseudo_mesh.F);
                 // viewer.append_mesh();
-                viewer.data(1).set_mesh(surface.V, surface.F);
+                // viewer.data(1).set_mesh(surface.V, surface.F);
             }
             needToPerformArap = false;
             // std::cout << "mesh.V after ARAP: " << mesh.V << std::endl;
@@ -408,8 +382,8 @@ int main(int argc, char *argv[])
     };
 
     viewer.data().set_mesh(pseudo_mesh.V, pseudo_mesh.F);
-    viewer.append_mesh();
-    viewer.data().set_mesh(surface.V, surface.F);
+    // viewer.append_mesh();
+    // viewer.data().set_mesh(surface.V, surface.F);
     viewer.data().set_face_based(true);
     viewer.launch();
 }
