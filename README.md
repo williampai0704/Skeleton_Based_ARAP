@@ -37,15 +37,31 @@ Defines the object of a `Mesh()`.
 
 `Eigen::MatrixXd F`: faces, defined by vertices' indexes.
 
-`Eigen::MatrixXd W`:
+`std::vector<std::list<int>> N`: neighbours of all vertices.
 
-`Eigen::MatrixXd L`:
+`Eigen::MatrixXd W`: weight matrix.
+
+`Eigen::MatrixXd L`: Laplacian matrix.
 
 `std::vector<ControlPoint> C`: list of control points.
 
 #### Functions
 
+`void computeL_W_N()`: compute and store the mesh's neighbour vertices `N`, weight matrix `W` and Laplacian matrix `L` continually.
 
+`Eigen::MatrixXd getL_withCP() const`: modify the Laplacian matrix `L` in accordance with control points `C`, and return it.
+
+`void addControlPoint(int vertexIndex)`: push back the selected vertex into the list of control points `C`.
+
+### ControlPoint.h
+
+Defines the object of a `ControlPoint()`.
+
+#### Variables
+
+`int vertexIndexInMesh`: vertex index in the mesh.
+
+`Eigen::RowVector3d wantedVertexPosition`: the position of the control point.
 
 ### InterfaceManager.cpp
 
@@ -55,11 +71,15 @@ Defines the object of a `Mesh()`.
 
 The main function to run the project.
 
-`read_pseudo_off()`: read pseudo mesh as `.off` file. Output: a tuple of its vertices and faces.
+`tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_pseudo_off()`: read pseudo mesh as `.off` file.  
+Output: a tuple of its vertices and faces.
 
-`read_surface_off()`: read surface mesh as `.off` file. Output: a tuple of its vertices and faces.
+`tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_surface_off()`: read surface mesh as `.off` file.  
+Output: a tuple of its vertices and faces.
 
-`get_bone()`: read the matching points of the skeleton bone on its pseudo mesh.
+`tuple<Eigen::MatrixXd, Eigen::MatrixXd> get_bone(Eigen::MatrixXd V)`: read the matching points of the skeleton bone on its pseudo mesh.  
+Input: pseudo mesh vertices.  
+Output: a tuple of skeleton vertices and the matching table.
 
-`read_attachment()`: read the coefficients for Linear Blend Skinning.
+`Eigen::MatrixXd read_attachment()`: read and return the coefficients for Linear Blend Skinning.
 
