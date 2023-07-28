@@ -8,4 +8,5 @@ This project uses [Eigen3](https://gitlab.com/libeigen/eigen) library in version
 brew install eigen
 ```
 remember to change the Eigen3_DIR in CMakeList.txt to correspond path.
+
 Also, [libigl](https://github.com/libigl/libigl) is used to construct the interface.
