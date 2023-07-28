@@ -14,49 +14,6 @@ void performARAP(Mesh &pseudo_mesh, Mesh& bone, const EInitialisationType& initi
     pseudo_mesh.V = arap(pseudo_mesh, 100, initialisationType);
 }
 
-// Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d vector1, Eigen::Vector3d vector2)
-// {
-//     double scalingFactor = vector2.norm() / vector1.norm();
-//      Eigen::Vector3d translation = vector2 - vector1;
-//     vector1.normalize();
-//     vector2.normalize();
-//     Eigen::Vector3d axis = vector1.cross(vector2);
-//     double angle = std::acos(vector1.dot(vector2));
-
-//     // Check if the vectors are collinear
-//     if (std::abs(1 - std::abs(vector1.dot(vector2))) < 1e-6) {
-//         // Vectors are collinear with the same direction (parallel)
-//         // Compute the scaling factor
-        
-
-//         // Step 2: Compute the translation vector
-
-//         // Step 3: Create the transformation matrix (scaling and translation)
-//         Eigen::Matrix4d transformationMatrix = Eigen::Matrix4d::Identity();
-//         transformationMatrix.block<3, 3>(0, 0) = scalingFactor * Eigen::Matrix3d::Identity();
-//         transformationMatrix.block<3, 1>(0, 3) = translation;
-
-//         // Print the transformation matrix
-//         std::cout << "Transformation Matrix (Collinear with Same Direction):" << std::endl;
-//         std::cout << transformationMatrix << std::endl;
-
-//         return transformationMatrix;
-        
-//     }
-
-//     // Step 4: Compute the rotation matrix using Eigen's built-in function
-//     Eigen::Matrix3d rotationMat = Eigen::AngleAxisd(angle, axis).toRotationMatrix();
-
-//     // Step 5: Compute the translation vector
-   
-
-//     // Step 6: Create the transformation matrix (rotation and translation)
-//     Eigen::Matrix4d transformationMatrix = Eigen::Matrix4d::Identity();
-//     transformationMatrix.block<3, 3>(0, 0) = scalingFactor * rotationMat;
-//     transformationMatrix.block<3, 1>(0, 3) = translation;
-//     return transformationMatrix;
-// }
-
 // Compute 4*4 transformation matrix for Linear BLend Skinning
 Eigen::Matrix4d compute_trans_matrix(Eigen::Vector3d vector1, Eigen::Vector3d vector2, Eigen::Vector3d trans)
 {
@@ -192,7 +149,7 @@ struct Face {
 // Read pseudo skeleton mesh 
 tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_pseudo_off()
 {
-    string filePath = "./../mesh/pseudo_mesh_5.off";
+    string filePath = "./../mesh/pseudo_mesh.off";
     ifstream file(filePath);
     if (!file) {
         cerr << "cannot open file in read_off()" << endl;
@@ -298,7 +255,7 @@ tuple<Eigen::MatrixXd, Eigen::MatrixXd> get_Bone(Eigen::MatrixXd V)
 // Read coefficient for Linear Blend Skinning
 Eigen::MatrixXd read_attachment()
 {
-    string filePath = "./../mesh/attachment_2.out";
+    string filePath = "./../mesh/attachment.out";
     ifstream file(filePath);
     if (!file) {
         cerr << "cannot open file" << endl;
