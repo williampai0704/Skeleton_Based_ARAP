@@ -7,6 +7,10 @@ This project implemented a skeleton-based ARAP (As Rigid As Possible) deformatio
 ["main"](https://github.com/williampai0704/Skeleton_Based_ARAP) branch perform ARAP with bear surface mesh.
 For the ARAP deformation with only pseudo mesh, checkout ["dev_GUI"](https://github.com/williampai0704/Skeleton_Based_ARAP/tree/dev_GUI) branch.
 
+## Additional Repo
+Checkout [Pinocchio](https://github.com/tsai-you-shin/Pinocchio) for linear blending code.
+Checkout [Pseudo Mesh](https://github.com/MS06J/3d_scanning) for pseudo mesh generation
+
 ## Dependencies
 This project uses [Eigen3](https://gitlab.com/libeigen/eigen) library in version 3.4.0. 
 Mac users can also install by 
@@ -131,7 +135,7 @@ The main function of the project.
 
 #### Functions
 
-`tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_pseudo_off()`: read pseudo mesh as `.off` file.  
+`tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_pseudo_off()`: read [pseudo mesh](https://github.com/MS06J/3d_scanning) as `.off` file.  
 **Output:** a tuple of its vertices and faces.
 
 `tuple<Eigen::MatrixXd, Eigen::MatrixXi> read_surface_off()`: read surface mesh as `.off` file.  
