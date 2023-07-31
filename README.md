@@ -25,8 +25,9 @@ Compile this project using the standard cmake routine:
     ./SKELETON_BASED_ARAP
 ```
 ## Branch
-"main" branch perform ARAP with bear surface mesh.
-For the ARAP deformation with only pseudo mesh, checkout "dev_GUI" branch.
+
+["main"](https://github.com/williampai0704/Skeleton_Based_ARAP) branch perform ARAP with bear surface mesh.
+For the ARAP deformation with only pseudo mesh, checkout ["dev_GUI"](https://github.com/williampai0704/Skeleton_Based_ARAP/tree/dev_GUI) branch.
 
 ## Files
 
