@@ -138,6 +138,6 @@ The main function of the project.
 **Input:** pseudo mesh vertices.  
 **Output:** a tuple of skeleton vertices and the matching table.
 
-`Eigen::MatrixXd read_attachment()`: read and return the coefficients for Linear Blend Skinning.
+`Eigen::MatrixXd read_attachment()`: read and return the coefficients for Linear Blend Skinning from [pinocchio](https://github.com/tsai-you-shin/Pinocchio)
 
 `void performARAP(Mesh &pseudo_mesh, Mesh& bone, const EInitialisationType& initialisationType, igl::opengl::glfw::Viewer& viewer, const InterfaceManager& interfaceManager)`: conduct ARAP deformation on the pseudo mesh.
