@@ -37,6 +37,8 @@ Compile this project using the standard cmake routine:
 
 ## Files
 
+### Final Presentation 
+[Final Report](3D_Scanning_Final_Report.pdf)
 ### Input OFF Files
 
 ### Mesh.cpp
